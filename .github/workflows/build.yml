@@ -13,6 +13,12 @@ jobs:
       - name: Checkout du code
         uses: actions/checkout@v4
 
+      - name: Configuration de Java 17 (déjà installé sur GitHub)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Configuration de Node.js
         uses: actions/setup-node@v4
         with:
@@ -21,9 +27,9 @@ jobs:
       - name: Installation de Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      - name: Configuration de Bubblewrap (Java et Android SDK)
+      - name: Configuration de Bubblewrap sans interaction
         run: |
-          # Les runners GitHub ont déjà Java et le SDK Android
+          # On indique à Bubblewrap d'utiliser les chemins vers Java et Android SDK fournis par GitHub
           bubblewrap updateConfig \
             --jdkPath="$JAVA_HOME" \
             --androidSdkPath="/usr/local/lib/android/sdk"
@@ -81,7 +87,8 @@ jobs:
         run: |
           cd twa
           bubblewrap update
-          bubblewrap build
+          # On utilise 'yes' pour accepter automatiquement les licences Android si demandées
+          yes | bubblewrap build
 
       - name: Téléversement de l'APK généré
         uses: actions/upload-artifact@v4
