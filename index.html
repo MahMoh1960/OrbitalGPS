@@ -147,35 +147,37 @@
             gap: 10px;
         }
 
-        /* BOUTONS JAUNES AVEC TEXTE NOIR STRICTEMENT FORCÉ */
-        button {
+        /* BOUTON CUSTOM EN DIV POUR GARANTIR LE NOIR SUR JAUNE SANS INTERférence ANDROID/WEB */
+        .custom-btn {
             flex: 1;
-            background: var(--accent-yellow) !important;
+            background-color: #ffcc00 !important;
             color: #000000 !important;
             border: none;
             border-radius: 8px;
-            padding: 12px;
-            font-weight: 800;
-            font-size: 0.9rem;
+            padding: 14px;
+            font-weight: 900 !important;
+            font-size: 0.95rem;
+            text-align: center;
             cursor: pointer;
-            transition: opacity 0.2s;
             box-shadow: 0 4px 10px rgba(255, 204, 0, 0.3);
+            user-select: none;
+            -webkit-user-select: none;
         }
 
-        button:active {
+        .custom-btn:active {
             opacity: 0.8;
         }
 
-        button.secondary {
-            background: transparent !important;
-            color: var(--accent-yellow) !important;
-            border: 1px solid var(--accent-yellow);
+        .custom-btn.secondary {
+            background-color: transparent !important;
+            color: #ffcc00 !important;
+            border: 1px solid #ffcc00;
             box-shadow: none;
         }
 
-        button.danger {
-            background: var(--danger-red) !important;
-            color: white !important;
+        .custom-btn.danger {
+            background-color: var(--danger-red) !important;
+            color: #ffffff !important;
             box-shadow: 0 4px 10px rgba(255, 68, 68, 0.3);
         }
 
@@ -259,6 +261,7 @@
             cursor: pointer;
             box-shadow: none;
             flex: unset;
+            font-weight: bold;
         }
 
         .calc-result {
@@ -277,7 +280,6 @@
             font-family: monospace;
         }
 
-        /* Zone de rapport textuel copiable */
         textarea.report-box {
             width: 100%;
             height: 80px;
@@ -357,7 +359,7 @@
 
     <!-- Contrôles GPS -->
     <div class="controls">
-        <button id="btn-lock" onclick="toggleTracking()">Activer GPS & Capteurs</button>
+        <div id="btn-lock" class="custom-btn" onclick="toggleTracking()">Activer GPS & Capteurs</div>
     </div>
 
     <!-- Boussole Qibla Active -->
@@ -369,7 +371,7 @@
         <div class="visual-container">
             <canvas id="compassCanvas" width="260" height="220"></canvas>
         </div>
-        <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 8px;">Aiguille ajustée vers la gauche pour une précision optimale de la Qibla.</p>
+        <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 8px;">Aiguille ajustée vers la droite pour un alignement précis.</p>
     </div>
 
     <!-- Carnet & Façade de Saisie -->
@@ -380,21 +382,19 @@
         <div class="form-group">
             <label for="waypoint-name">Nom du point ou coin de terrain :</label>
             <input type="text" id="waypoint-name" placeholder="Ex: Borne 1, Puits, Coin Nord...">
-            <button onclick="saveCurrentPosition()">Mémoriser ce point</button>
+            <div class="custom-btn" onclick="saveCurrentPosition()">Mémoriser ce point</div>
         </div>
         <div style="font-size: 0.8rem; color: var(--accent-yellow); margin-bottom: 8px; font-weight: 600;">Waypoints Enregistrés :</div>
         <div id="saved-list" class="saved-list">
             <!-- Rempli dynamiquement -->
         </div>
 
-        <!-- Récapitulatif textuel copiable -->
         <label for="report-text">Récapitulatif textuel (copiable pour rapports) :</label>
         <textarea id="report-text" class="report-box" readonly>Aucun point enregistré.</textarea>
 
-        <!-- Boutons JSON -->
         <div class="controls" style="margin-top: 10px;">
-            <button onclick="exportJSON()">Exporter JSON</button>
-            <button class="secondary" onclick="document.getElementById('import-file').click()">Importer JSON</button>
+            <div class="custom-btn" onclick="exportJSON()">Exporter JSON</div>
+            <div class="custom-btn secondary" onclick="document.getElementById('import-file').click()">Importer JSON</div>
             <input type="file" id="import-file" style="display:none" accept=".json" onchange="importJSON(event)">
         </div>
     </div>
@@ -404,7 +404,7 @@
         <div class="card-title">
             <span>Calculateur de Surface (Terrain)</span>
         </div>
-        <button onclick="calculateLandArea()">Calculer la superficie</button>
+        <div class="custom-btn" onclick="calculateLandArea()">Calculer la superficie</div>
         <div class="calc-result">
             <div class="stat-label">Superficie Estimée</div>
             <div id="area-result" class="calc-value">-- m² (-- ha)</div>
@@ -425,7 +425,7 @@
     <!-- Journaux -->
     <div class="card" style="padding: 10px;">
         <div class="card-title" style="margin-bottom: 6px; font-size: 0.8rem;">Flux de Télémétrie</div>
-        <div id="log-box" class="logs">[SYSTEM] Prêt. Interface mise à jour (Noir sur Jaune + Ajustement Qibla).</div>
+        <div id="log-box" class="logs">[SYSTEM] Prêt. Boutons noir/jaune strict & Qibla ajustée à droite.</div>
     </div>
 
     <footer>OrbitalGPS PWA • Android APK Ready</footer>
@@ -464,8 +464,9 @@
         const y = Math.sin(kaabaLon - lambda);
         const x = Math.cos(phi) * Math.tan(kaabaLat) - Math.sin(phi) * Math.cos(kaabaLon - lambda);
         let q = Math.atan2(y, x) * 180 / Math.PI;
-        // Application de l'ajustement correctif demandé vers la gauche (ex: décalage de correction de 4.5 degrés vers la gauche)
-        const qiblaCorrectionOffset = 4.5; 
+        
+        // Ajustement corrigé : rotation vers la droite (ajout d'un offset positif pour tourner vers l'est/droite)
+        const qiblaCorrectionOffset = -5.0; 
         return ((q + 360) % 360) - qiblaCorrectionOffset;
     }
 
@@ -643,7 +644,7 @@
             item.innerHTML = `
                 <div class="saved-item-header">
                     <span class="saved-title">#${index + 1} - ${wp.name}</span>
-                    <button class="delete-btn" onclick="deleteWaypoint(${index})">Supprimer</button>
+                    <div class="delete-btn" onclick="deleteWaypoint(${index})">Supprimer</div>
                 </div>
                 <div class="saved-coords">Lat: ${wp.lat.toFixed(6)}, Lon: ${wp.lon.toFixed(6)}</div>
                 <div class="saved-meta">
@@ -768,7 +769,7 @@
                 position => {
                     isTracking = true;
                     btn.innerText = "Arrêter Suivi";
-                    btn.style.background = "#ff4444";
+                    btn.style.backgroundColor = "#ff4444";
                     btn.style.color = "#ffffff";
                     statusBadge.innerText = "Fix 3D Actif";
 
@@ -796,7 +797,7 @@
             navigator.geolocation.clearWatch(watchId);
             isTracking = false;
             btn.innerText = "Activer GPS & Capteurs";
-            btn.style.background = "var(--accent-yellow)";
+            btn.style.backgroundColor = "#ffcc00";
             btn.style.color = "#000000";
             statusBadge.innerText = "En attente";
             logMessage("Suivi arrêté.");
