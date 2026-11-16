@@ -497,6 +497,22 @@
         <div id="saved-list" class="saved-list"></div>
     </div>
 
+    <!-- Sauvegarde & Restauration JSON -->
+    <div class="card">
+        <div class="card-title">
+            <span>Sauvegarde &amp; Restauration</span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="exportBackupJSON()">Exporter (JSON)</button>
+            <button onclick="importBackupJSON()">Importer (JSON)</button>
+        </div>
+        <input type="file" id="import-file" accept=".json,application/json" style="display: none;">
+        <p style="font-size: 0.72rem; color: var(--text-muted); margin-top: 10px; text-align: center; line-height: 1.4;">
+            L'export télécharge une copie de tous vos points mémorisés.<br>
+            L'import remplace le carnet actuel par le contenu du fichier.
+        </p>
+    </div>
+
     <div class="card">
         <div class="card-title">
             <span>Radar Orbital (LEO Sim)</span>
@@ -775,6 +791,147 @@
         logMessage("Position supprimée du carnet.");
     }
 
+    /* ================================
+       EXPORT / IMPORT DE SAUVEGARDE JSON
+       ================================ */
+
+    function pad2(n) {
+        return n < 10 ? "0" + n : "" + n;
+    }
+
+    function exportBackupJSON() {
+        if (waypoints.length === 0) {
+            if (!confirm("Le carnet est vide. Voulez-vous quand même exporter un fichier vide ?")) {
+                return;
+            }
+        }
+
+        var backup = {
+            app: "OrbitalGPS",
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            waypointCount: waypoints.length,
+            waypoints: waypoints
+        };
+
+        var json = JSON.stringify(backup, null, 2);
+        var blob = new Blob([json], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+
+        var now = new Date();
+        var dateStr =
+            now.getFullYear() + "-" +
+            pad2(now.getMonth() + 1) + "-" +
+            pad2(now.getDate()) + "_" +
+            pad2(now.getHours()) + "-" +
+            pad2(now.getMinutes()) + "-" +
+            pad2(now.getSeconds());
+
+        var link = document.createElement("a");
+        link.href = url;
+        link.download = "OrbitalGPS_Backup_" + dateStr + ".json";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        logMessage("Sauvegarde JSON exportée (" + waypoints.length + " point(s)).");
+    }
+
+    function importBackupJSON() {
+        var input = document.getElementById("import-file");
+        input.value = "";
+        input.click();
+    }
+
+    document.getElementById("import-file").addEventListener("change", function(event) {
+        var file = event.target.files && event.target.files[0];
+        if (!file) {
+            return;
+        }
+
+        var reader = new FileReader();
+
+        reader.onload = function(e) {
+            var parsed;
+            try {
+                parsed = JSON.parse(e.target.result);
+            } catch (err) {
+                alert("Fichier JSON invalide : " + err.message);
+                return;
+            }
+
+            var importedWaypoints;
+            if (Array.isArray(parsed)) {
+                importedWaypoints = parsed;
+            } else if (parsed && Array.isArray(parsed.waypoints)) {
+                importedWaypoints = parsed.waypoints;
+            } else {
+                alert("Structure non reconnue. Le fichier doit contenir un tableau de points ou une propriété 'waypoints'.");
+                return;
+            }
+
+            var validWaypoints = [];
+            for (var i = 0; i < importedWaypoints.length; i++) {
+                var wp = importedWaypoints[i];
+                if (!wp || typeof wp !== "object") {
+                    continue;
+                }
+                if (typeof wp.name !== "string") {
+                    continue;
+                }
+                if (!Number.isFinite(Number(wp.lat))) {
+                    continue;
+                }
+                if (!Number.isFinite(Number(wp.lon))) {
+                    continue;
+                }
+                validWaypoints.push({
+                    name: String(wp.name),
+                    lat: Number(wp.lat),
+                    lon: Number(wp.lon),
+                    alt: wp.alt !== undefined && wp.alt !== null ? String(wp.alt) : "N/A",
+                    date: wp.date ? String(wp.date) : new Date().toLocaleString()
+                });
+            }
+
+            if (validWaypoints.length === 0) {
+                alert("Aucun point valide trouvé dans le fichier.");
+                return;
+            }
+
+            var msg = "Importer " + validWaypoints.length + " point(s) ?\n\n" +
+                "⚠️ Le carnet actuel (" + waypoints.length + " point(s)) sera remplacé.";
+
+            if (!confirm(msg)) {
+                return;
+            }
+
+            waypoints = validWaypoints;
+            storeWaypoints();
+            renderWaypoints();
+            logMessage("Sauvegarde importée : " + validWaypoints.length + " point(s) restaurés.");
+
+            if (validWaypoints.length < importedWaypoints.length) {
+                logMessage(
+                    "Attention : " +
+                    (importedWaypoints.length - validWaypoints.length) +
+                    " entrée(s) ignorée(s) car invalide(s)."
+                );
+            }
+        };
+
+        reader.onerror = function() {
+            alert("Erreur lors de la lecture du fichier.");
+        };
+
+        reader.readAsText(file);
+    });
+
+    /* ================================
+       RADAR
+       ================================ */
+
     var canvas = document.getElementById("radarCanvas");
     var ctx = canvas ? canvas.getContext("2d") : null;
     var radarAngle = 0;
@@ -853,6 +1010,10 @@
     }
 
     drawRadar();
+
+    /* ================================
+       SUIVI GPS
+       ================================ */
 
     function toggleTracking() {
         var btn = document.getElementById("btn-lock");
