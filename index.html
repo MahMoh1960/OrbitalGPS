@@ -126,20 +126,7 @@
             color: var(--accent-yellow);
         }
 
-        .radar-container {
-            position: relative;
-            width: 100%;
-            height: 200px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #07101c;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-        }
-
-        /* Boussole Qibla */
+        /* Boussole de la Qibla */
         .qibla-layout {
             display: flex;
             flex-direction: column;
@@ -212,6 +199,19 @@
             line-height: 1.4;
         }
 
+        .radar-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #07101c;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
         canvas {
             display: block;
         }
@@ -252,7 +252,6 @@
             box-shadow: 0 4px 10px rgba(255, 68, 68, 0.3);
         }
 
-        /* Formulaire du carnet */
         .form-group {
             display: flex;
             flex-direction: column;
@@ -324,6 +323,7 @@
         }
 
         .delete-btn {
+            flex: unset;
             background: transparent;
             color: var(--danger-red);
             border: none;
@@ -331,7 +331,6 @@
             font-size: 0.75rem;
             cursor: pointer;
             box-shadow: none;
-            flex: unset;
         }
 
         .logs {
@@ -362,7 +361,7 @@
         <p>Positionnement &amp; Carnet Géodésique</p>
     </header>
 
-    <!-- Section GPS temps réel -->
+    <!-- GPS en temps réel -->
     <div class="card">
         <div class="card-title">
             <span>Fixation GPS Terrestre</span>
@@ -397,7 +396,7 @@
         </div>
     </div>
 
-    <!-- Indicateur de Qibla -->
+    <!-- Direction de la Qibla -->
     <div class="card">
         <div class="card-title">
             <span>Direction de la Qibla</span>
@@ -430,7 +429,7 @@
         </div>
     </div>
 
-    <!-- Contrôles GPS -->
+    <!-- Commandes GPS -->
     <div class="controls">
         <button id="btn-lock" onclick="toggleTracking()">Activer GPS Continu</button>
         <button class="secondary" onclick="exportLogs()">Exporter Log</button>
@@ -456,12 +455,10 @@
             Positions mémorisées &amp; distances :
         </div>
 
-        <div id="saved-list" class="saved-list">
-            <!-- Liste dynamique des points -->
-        </div>
+        <div id="saved-list" class="saved-list"></div>
     </div>
 
-    <!-- Radar LEO simulé -->
+    <!-- Radar orbital simulé -->
     <div class="card">
         <div class="card-title">
             <span>Radar Orbital (LEO Sim)</span>
@@ -484,51 +481,71 @@
 </div>
 
 <script>
-    let watchId = null;
-    let isTracking = false;
-    let currentCoords = { lat: null, lon: null, alt: null };
-    let compassHeading = null;
-    let compassListening = false;
+    var watchId = null;
+    var isTracking = false;
+    var currentCoords = { lat: null, lon: null, alt: null };
+    var compassHeading = null;
+    var compassListening = false;
 
-    const logBox = document.getElementById("log-box");
+    var logBox = document.getElementById("log-box");
 
-    function logMessage(msg) {
-        const time = new Date().toLocaleTimeString();
-        logBox.innerHTML += `<br>[${time] ${msg}`;
+    function logMessage(message) {
+        var time = new Date().toLocaleTimeString();
+        logBox.innerHTML += "<br>[" + time + "] " + message;
         logBox.scrollTop = logBox.scrollHeight;
     }
 
+    function getSavedWaypoints() {
+        try {
+            var saved = window.localStorage.getItem("orbital_waypoints");
+            var parsed = saved ? JSON.parse(saved) : [];
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function storeWaypoints() {
+        try {
+            window.localStorage.setItem("orbital_waypoints", JSON.stringify(waypoints));
+        } catch (error) {
+            logMessage("Impossible d'enregistrer les positions dans ce navigateur.");
+        }
+    }
+
+    var waypoints = getSavedWaypoints();
+
     // Distance géodésique entre deux positions, en kilomètres
     function calculateDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
+        var R = 6371;
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLon = (lon2 - lon1) * Math.PI / 180;
 
-        const a =
+        var a =
             Math.sin(dLat / 2) * Math.sin(dLat / 2) +
             Math.cos(lat1 * Math.PI / 180) *
             Math.cos(lat2 * Math.PI / 180) *
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
     }
 
     // Coordonnées de la Kaaba, à La Mecque
-    const KAABA_COORDS = { lat: 21.422487, lon: 39.826206 };
+    var KAABA_COORDS = { lat: 21.422487, lon: 39.826206 };
 
     function normalizeBearing(degrees) {
         return ((degrees % 360) + 360) % 360;
     }
 
-    // Calcule l'azimut initial depuis la position GPS vers la Kaaba
+    // Azimut depuis la position GPS jusqu'à la Kaaba
     function calculateQiblaBearing(latitude, longitude) {
-        const lat1 = latitude * Math.PI / 180;
-        const lat2 = KAABA_COORDS.lat * Math.PI / 180;
-        const deltaLon = (KAABA_COORDS.lon - longitude) * Math.PI / 180;
+        var lat1 = latitude * Math.PI / 180;
+        var lat2 = KAABA_COORDS.lat * Math.PI / 180;
+        var deltaLon = (KAABA_COORDS.lon - longitude) * Math.PI / 180;
 
-        const y = Math.sin(deltaLon) * Math.cos(lat2);
-        const x =
+        var y = Math.sin(deltaLon) * Math.cos(lat2);
+        var x =
             Math.cos(lat1) * Math.sin(lat2) -
             Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLon);
 
@@ -536,11 +553,11 @@
     }
 
     function updateQibla() {
-        const status = document.getElementById("qibla-status");
-        const bearingDisplay = document.getElementById("qibla-bearing");
-        const headingDisplay = document.getElementById("compass-heading");
-        const pointer = document.getElementById("qibla-pointer");
-        const hint = document.getElementById("qibla-hint");
+        var status = document.getElementById("qibla-status");
+        var bearingDisplay = document.getElementById("qibla-bearing");
+        var headingDisplay = document.getElementById("compass-heading");
+        var pointer = document.getElementById("qibla-pointer");
+        var hint = document.getElementById("qibla-hint");
 
         if (currentCoords.lat === null || currentCoords.lon === null) {
             status.innerText = "GPS requis";
@@ -550,35 +567,46 @@
             return;
         }
 
-        const bearing = calculateQiblaBearing(currentCoords.lat, currentCoords.lon);
-        bearingDisplay.innerText = `${bearing.toFixed(0)}°`;
+        var bearing = calculateQiblaBearing(currentCoords.lat, currentCoords.lon);
+        bearingDisplay.innerText = bearing.toFixed(0) + "°";
 
         if (compassHeading === null) {
             status.innerText = "Boussole inactive";
             headingDisplay.innerText = "--°";
-            pointer.style.transform = `rotate(${bearing}deg)`;
+            pointer.style.transform = "rotate(" + bearing + "deg)";
             hint.innerText =
                 "Azimut mesuré depuis le nord. Activez la boussole pour orienter la flèche par rapport au téléphone.";
             return;
         }
 
-        headingDisplay.innerText = `${compassHeading.toFixed(0)}°`;
+        headingDisplay.innerText = compassHeading.toFixed(0) + "°";
         status.innerText = "Direction calculée";
 
-        const relativeBearing = normalizeBearing(bearing - compassHeading);
-        pointer.style.transform = `rotate(${relativeBearing}deg)`;
-        hint.innerText = "Tournez le téléphone jusqu’à ce que la flèche pointe vers le haut.";
+        var relativeBearing = normalizeBearing(bearing - compassHeading);
+        pointer.style.transform = "rotate(" + relativeBearing + "deg)";
+        hint.innerText = "Tournez le téléphone jusqu'à ce que la flèche pointe vers le haut.";
     }
 
     function handleDeviceOrientation(event) {
-        let heading = null;
+        var heading = null;
 
         // Cap fourni directement par certains appareils Apple
         if (Number.isFinite(event.webkitCompassHeading)) {
             heading = event.webkitCompassHeading;
         } else if (event.absolute === true && Number.isFinite(event.alpha)) {
-            const screenAngle = screen.orientation?.angle ?? window.orientation ?? 0;
-            heading = normalizeBearing(360 - event.alpha + Number(screenAngle));
+            var screenAngle = 0;
+
+            if (
+                window.screen &&
+                window.screen.orientation &&
+                typeof window.screen.orientation.angle === "number"
+            ) {
+                screenAngle = window.screen.orientation.angle;
+            } else if (typeof window.orientation === "number") {
+                screenAngle = window.orientation;
+            }
+
+            heading = normalizeBearing(360 - event.alpha + screenAngle);
         } else {
             return;
         }
@@ -587,44 +615,48 @@
         updateQibla();
     }
 
-    async function enableCompass() {
+    function enableCompass() {
         if (!window.isSecureContext) {
             alert("La boussole et le GPS nécessitent une connexion HTTPS ou localhost.");
             return;
         }
 
         if (!window.DeviceOrientationEvent) {
-            alert("La boussole n’est pas prise en charge par cet appareil ou ce navigateur.");
+            alert("La boussole n'est pas prise en charge par cet appareil ou ce navigateur.");
             return;
         }
 
-        try {
-            if (typeof DeviceOrientationEvent.requestPermission === "function") {
-                const permission = await DeviceOrientationEvent.requestPermission();
+        var permissionFunction = window.DeviceOrientationEvent.requestPermission;
 
-                if (permission !== "granted") {
-                    alert("L’accès à la boussole n’a pas été autorisé.");
-                    return;
-                }
-            }
-
-            if (!compassListening) {
-                window.addEventListener("deviceorientationabsolute", handleDeviceOrientation, true);
-                window.addEventListener("deviceorientation", handleDeviceOrientation, true);
-                compassListening = true;
-            }
-
-            document.getElementById("qibla-status").innerText = "Boussole activée";
-        } catch (error) {
-            alert("Impossible d’activer la boussole. Vérifiez les autorisations du navigateur.");
+        if (typeof permissionFunction === "function") {
+            permissionFunction.call(window.DeviceOrientationEvent)
+                .then(function(permission) {
+                    if (permission !== "granted") {
+                        alert("L'accès à la boussole n'a pas été autorisé.");
+                        return;
+                    }
+                    startCompassListening();
+                })
+                .catch(function() {
+                    alert("Impossible d'activer la boussole. Vérifiez les autorisations du navigateur.");
+                });
+        } else {
+            startCompassListening();
         }
     }
 
-    // Carnet de positions stocké dans le navigateur
-    let waypoints = JSON.parse(localStorage.getItem("orbital_waypoints") || "[]");
+    function startCompassListening() {
+        if (!compassListening) {
+            window.addEventListener("deviceorientationabsolute", handleDeviceOrientation, true);
+            window.addEventListener("deviceorientation", handleDeviceOrientation, true);
+            compassListening = true;
+        }
+
+        document.getElementById("qibla-status").innerText = "Boussole activée";
+    }
 
     function renderWaypoints() {
-        const listContainer = document.getElementById("saved-list");
+        var listContainer = document.getElementById("saved-list");
         listContainer.innerHTML = "";
 
         if (waypoints.length === 0) {
@@ -635,34 +667,40 @@
             return;
         }
 
-        waypoints.forEach((wp, index) => {
-            let distText = "-- km";
+        waypoints.forEach(function(wp, index) {
+            var distText = "-- km";
 
             if (currentCoords.lat !== null && currentCoords.lon !== null) {
-                const dist = calculateDistance(
+                var dist = calculateDistance(
                     currentCoords.lat,
                     currentCoords.lon,
                     wp.lat,
                     wp.lon
                 );
+
                 distText = dist < 1
                     ? (dist * 1000).toFixed(0) + " m"
                     : dist.toFixed(2) + " km";
             }
 
-            const item = document.createElement("div");
+            var item = document.createElement("div");
             item.className = "saved-item";
-            item.innerHTML = `
-                <div class="saved-item-header">
-                    <span class="saved-title">${wp.name}</span>
-                    <button class="delete-btn" onclick="deleteWaypoint(${index})">Supprimer</button>
-                </div>
-                <div class="saved-coords">Lat: ${wp.lat.toFixed(6)}, Lon: ${wp.lon.toFixed(6)}</div>
-                <div class="saved-meta">
-                    <span>Alt : ${wp.alt}</span>
-                    <span>Distance : <strong>${distText}</strong></span>
-                </div>
-            `;
+            item.innerHTML =
+                '<div class="saved-item-header">' +
+                    '<span class="saved-title"></span>' +
+                    '<button class="delete-btn" onclick="deleteWaypoint(' + index + ')">Supprimer</button>' +
+                '</div>' +
+                '<div class="saved-coords">Lat: ' +
+                    Number(wp.lat).toFixed(6) +
+                    ', Lon: ' +
+                    Number(wp.lon).toFixed(6) +
+                '</div>' +
+                '<div class="saved-meta">' +
+                    '<span>Alt : ' + wp.alt + '</span>' +
+                    '<span>Distance : <strong>' + distText + '</strong></span>' +
+                '</div>';
+
+            item.querySelector(".saved-title").textContent = wp.name;
             listContainer.appendChild(item);
         });
     }
@@ -673,8 +711,8 @@
             return;
         }
 
-        const nameInput = document.getElementById("waypoint-name");
-        const customName = nameInput.value.trim();
+        var nameInput = document.getElementById("waypoint-name");
+        var customName = nameInput.value.trim();
 
         if (!customName) {
             alert("Veuillez saisir un nom pour identifier cet endroit.");
@@ -692,35 +730,39 @@
             date: new Date().toLocaleString()
         });
 
-        localStorage.setItem("orbital_waypoints", JSON.stringify(waypoints));
+        storeWaypoints();
         nameInput.value = "";
         renderWaypoints();
-        logMessage(`Position "${customName}" mémorisée avec succès.`);
+        logMessage('Position "' + customName + '" mémorisée avec succès.');
     }
 
     function deleteWaypoint(index) {
         waypoints.splice(index, 1);
-        localStorage.setItem("orbital_waypoints", JSON.stringify(waypoints));
+        storeWaypoints();
         renderWaypoints();
         logMessage("Position supprimée du carnet.");
     }
 
-    // Radar LEO simulé
-    const canvas = document.getElementById("radarCanvas");
-    const ctx = canvas.getContext("2d");
-    let radarAngle = 0;
+    // Radar orbital simulé
+    var canvas = document.getElementById("radarCanvas");
+    var ctx = canvas ? canvas.getContext("2d") : null;
+    var radarAngle = 0;
 
     function drawRadar() {
+        if (!ctx) {
+            return;
+        }
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const cx = canvas.width / 2;
-        const cy = canvas.height / 2;
-        const maxR = 85;
+        var cx = canvas.width / 2;
+        var cy = canvas.height / 2;
+        var maxR = 85;
 
         ctx.strokeStyle = "rgba(255, 204, 0, 0.15)";
         ctx.lineWidth = 1;
 
-        [28, 56, 85].forEach(radius => {
+        [28, 56, 85].forEach(function(radius) {
             ctx.beginPath();
             ctx.arc(cx, cy, radius, 0, Math.PI * 2);
             ctx.stroke();
@@ -738,7 +780,7 @@
         ctx.translate(cx, cy);
         ctx.rotate(radarAngle);
 
-        const gradient = ctx.createLinearGradient(0, 0, maxR, 0);
+        var gradient = ctx.createLinearGradient(0, 0, maxR, 0);
         gradient.addColorStop(0, "rgba(255, 204, 0, 0.4)");
         gradient.addColorStop(1, "rgba(255, 204, 0, 0)");
 
@@ -750,15 +792,15 @@
         ctx.fill();
         ctx.restore();
 
-        const satellites = [
+        var satellites = [
             { distance: 40, theta: radarAngle * 1.5, name: "GPS-SV 03" },
             { distance: 70, theta: -radarAngle * 0.8 + 1, name: "GALILEO 21" },
             { distance: 22, theta: radarAngle * 2 - 0.5, name: "GLONASS 7" }
         ];
 
-        satellites.forEach(satellite => {
-            const sx = cx + Math.cos(satellite.theta) * satellite.distance;
-            const sy = cy + Math.sin(satellite.theta) * satellite.distance;
+        satellites.forEach(function(satellite) {
+            var sx = cx + Math.cos(satellite.theta) * satellite.distance;
+            var sy = cy + Math.sin(satellite.theta) * satellite.distance;
 
             ctx.fillStyle = "#ffcc00";
             ctx.beginPath();
@@ -776,15 +818,15 @@
         ctx.fill();
 
         radarAngle += 0.02;
-        requestAnimationFrame(drawRadar);
+        window.requestAnimationFrame(drawRadar);
     }
 
     drawRadar();
 
     // Suivi GPS
     function toggleTracking() {
-        const btn = document.getElementById("btn-lock");
-        const statusBadge = document.getElementById("gps-status");
+        var btn = document.getElementById("btn-lock");
+        var statusBadge = document.getElementById("gps-status");
 
         if (!isTracking) {
             if (!navigator.geolocation) {
@@ -792,16 +834,14 @@
                 return;
             }
 
-            logMessage("Connexion au module GPS en cours...");
+            isTracking = true;
+            btn.innerText = "Arrêter GPS";
+            btn.classList.add("danger");
             statusBadge.innerText = "Recherche...";
+            logMessage("Connexion au module GPS en cours...");
 
             watchId = navigator.geolocation.watchPosition(
-                position => {
-                    isTracking = true;
-                    btn.innerText = "Arrêter GPS";
-                    btn.classList.add("danger");
-                    statusBadge.innerText = "Fix GPS actif";
-
+                function(position) {
                     currentCoords.lat = position.coords.latitude;
                     currentCoords.lon = position.coords.longitude;
                     currentCoords.alt = position.coords.altitude;
@@ -817,19 +857,20 @@
                     document.getElementById("val-acc").innerText =
                         position.coords.accuracy.toFixed(1) + " m";
                     document.getElementById("val-speed").innerText =
-                        position.coords.speed !== null
+                        Number.isFinite(position.coords.speed)
                             ? (position.coords.speed * 3.6).toFixed(1) + " km/h"
                             : "0 km/h";
                     document.getElementById("val-heading").innerText =
-                        position.coords.heading !== null
+                        Number.isFinite(position.coords.heading)
                             ? position.coords.heading.toFixed(0) + "°"
                             : "--°";
 
+                    statusBadge.innerText = "Fix GPS actif";
                     updateQibla();
                     renderWaypoints();
                 },
-                error => {
-                    logMessage(`Erreur GPS [${error.code] : ${error.message}`);
+                function(error) {
+                    logMessage("Erreur GPS [" + error.code + "] : " + error.message);
                     statusBadge.innerText = "Erreur GPS";
                 },
                 {
@@ -853,20 +894,22 @@
     }
 
     function exportLogs() {
-        const text =
+        var text =
             logBox.innerText +
             "\n\n--- CARNET DE POSITIONS ---\n" +
             JSON.stringify(waypoints, null, 2);
 
-        const blob = new Blob([text], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
+        var blob = new Blob([text], { type: "text/plain" });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement("a");
 
         link.href = url;
-        link.download = `OrbitalGPS_Waypoints_${Date.now()}.txt`;
+        link.download = "OrbitalGPS_Waypoints_" + Date.now() + ".txt";
+        document.body.appendChild(link);
         link.click();
-
+        document.body.removeChild(link);
         URL.revokeObjectURL(url);
+
         logMessage("Rapport et positions exportés.");
     }
 
