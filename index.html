@@ -529,6 +529,20 @@
             forced-color-adjust: none;
         }
     </style>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(function(reg) {
+                        console.log('[PWA] Service worker enregistré :', reg.scope);
+                    })
+                    .catch(function(err) {
+                        console.warn('[PWA] Échec de l\'enregistrement du service worker :', err);
+                    });
+            });
+        }
+    </script>
 </head>
 
 <body>
