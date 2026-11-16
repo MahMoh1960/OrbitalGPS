@@ -126,7 +126,6 @@
             color: var(--accent-yellow);
         }
 
-        /* Boussole de la Qibla */
         .qibla-layout {
             display: flex;
             flex-direction: column;
@@ -216,7 +215,6 @@
             display: block;
         }
 
-        /* Ruban des commandes */
         .controls {
             display: flex;
             gap: 10px;
@@ -385,7 +383,6 @@
         <p>Positionnement &amp; Carnet Géodésique</p>
     </header>
 
-    <!-- GPS en temps réel -->
     <div class="card">
         <div class="card-title">
             <span>Fixation GPS Terrestre</span>
@@ -420,7 +417,6 @@
         </div>
     </div>
 
-    <!-- Direction de la Qibla -->
     <div class="card">
         <div class="card-title">
             <span>Direction de la Qibla</span>
@@ -457,7 +453,6 @@
         </div>
     </div>
 
-    <!-- Ruban des commandes GPS -->
     <div class="controls">
         <button
             id="btn-lock"
@@ -472,7 +467,6 @@
         >Exporter Log</button>
     </div>
 
-    <!-- Carnet de positions -->
     <div class="card">
         <div class="card-title">
             <span>Façade de Saisie &amp; Carnet</span>
@@ -498,7 +492,6 @@
         <div id="saved-list" class="saved-list"></div>
     </div>
 
-    <!-- Radar orbital simulé -->
     <div class="card">
         <div class="card-title">
             <span>Radar Orbital (LEO Sim)</span>
@@ -509,7 +502,6 @@
         </div>
     </div>
 
-    <!-- Journaux -->
     <div class="card" style="padding: 10px;">
         <div class="card-title" style="margin-bottom: 6px; font-size: 0.8rem;">
             Flux de Télémétrie
@@ -569,7 +561,6 @@
         return R * c;
     }
 
-    // Coordonnées de la Kaaba, à La Mecque
     var KAABA_COORDS = { lat: 21.422487, lon: 39.826206 };
 
     function normalizeBearing(degrees) {
@@ -779,7 +770,6 @@
         logMessage("Position supprimée du carnet.");
     }
 
-    // Radar orbital simulé
     var canvas = document.getElementById("radarCanvas");
     var ctx = canvas ? canvas.getContext("2d") : null;
     var radarAngle = 0;
@@ -859,7 +849,6 @@
 
     drawRadar();
 
-    // Suivi GPS
     function toggleTracking() {
         var btn = document.getElementById("btn-lock");
         var statusBadge = document.getElementById("gps-status");
