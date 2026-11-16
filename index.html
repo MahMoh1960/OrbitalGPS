@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OrbitalGPS - Télémétrie & Positionnement Satellite</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b192c">
+    <style>
+        :root {
+            --bg-primary: #0b192c;
+            --bg-card: #132238;
+            --accent-yellow: #ffcc00;
+            --text-main: #ffffff;
+            --text-muted: #8aa4c4;
+            --border-color: rgba(255, 204, 0, 0.2);
+            --success-green: #00ff88;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        header {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        header h1 {
+            color: var(--accent-yellow);
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .card-title {
+            color: var(--accent-yellow);
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--success-green);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .grid-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .stat-box {
+            background: rgba(11, 25, 44, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            font-family: monospace;
+        }
+
+        .stat-value.highlight {
+            color: var(--accent-yellow);
+        }
+
+        /* Radar Canvas Container */
+        .radar-container {
+            position: relative;
+            width: 100%;
+            height: 240px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #07101c;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            background: var(--accent-yellow);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 10px rgba(255, 204, 0, 0.3);
+        }
+
+        button:active {
+            opacity: 0.8;
+        }
+
+        button.secondary {
+            background: transparent;
+            color: var(--accent-yellow);
+            border: 1px solid var(--accent-yellow);
+            box-shadow: none;
+        }
+
+        .logs {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: #07101c;
+            padding: 10px;
+            border-radius: 6px;
+            height: 80px;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>OrbitalGPS Telemetry</h1>
+        <p>Interface de Positionnement Terrestre & Quasi-Satellite</p>
+    </header>
+
+    <!-- Section GPS Temps Réel -->
+    <div class="card">
+        <div class="card-title">
+            <span>Fixation GPS Terrestre</span>
+            <span id="gps-status" class="status-badge">Recherche...</span>
+        </div>
+        <div class="grid-stats">
+            <div class="stat-box">
+                <div class="stat-label">Latitude</div>
+                <div id="val-lat" class="stat-value highlight">--.--</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Longitude</div>
+                <div id="val-lon" class="stat-value highlight">--.--</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Altitude</div>
+                <div id="val-alt" class="stat-value">-- m</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Précision</div>
+                <div id="val-acc" class="stat-value">-- m</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Vitesse</div>
+                <div id="val-speed" class="stat-value">-- km/h</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Cap (Azimut)</div>
+                <div id="val-heading" class="stat-value">--°</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Radar & Simulation Quasi-Satellite -->
+    <div class="card">
+        <div class="card-title">
+            <span>Radar Orbital (LEO Sim)</span>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Alt: ~550 km</span>
+        </div>
+        <div class="radar-container">
+            <canvas id="radarCanvas" width="280" height="240"></canvas>
+        </div>
+        <div style="margin-top: 10px; display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+            <span>Satellites visibles : <strong id="sat-count" style="color:var(--accent-yellow)">4</strong></span>
+            <span>Vitesse orbitale : <strong style="color:var(--text-main)">7.82 km/s</strong></span>
+        </div>
+    </div>
+
+    <!-- Contrôles -->
+    <div class="controls">
+        <button id="btn-lock" onclick="toggleTracking()">Activer GPS Continu</button>
+        <button class="secondary" onclick="exportData()">Rapport Log</button>
+    </div>
+
+    <!-- Journaux de bord -->
+    <div class="card" style="padding: 10px;">
+        <div class="card-title" style="margin-bottom: 6px; font-size: 0.8rem;">Flux de Télémétrie</div>
+        <div id="log-box" class="logs">[SYSTEM] Initialisation du module OrbitalGPS...<br>[SYSTEM] Prêt pour acquisition des coordonnées.</div>
+    </div>
+
+    <footer>OrbitalGPS PWA • Prêt pour conversion APK</footer>
+</div>
+
+<script>
+    let watchId = null;
+    let isTracking = false;
+    const logBox = document.getElementById('log-box');
+
+    function logMessage(msg) {
+        const time = new Date().toLocaleTimeString();
+        logBox.innerHTML += `<br>[${time}] ${msg}`;
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    // Canvas Radar Rendering
+    const canvas = document.getElementById('radarCanvas');
+    const ctx = canvas.getContext('2d');
+    let angle = 0;
+
+    function drawRadar() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const maxR = 105;
+
+        // Cercles concentriques
+        ctx.strokeStyle = 'rgba(255, 204, 0, 0.15)';
+        ctx.lineWidth = 1;
+        [35, 70, 105].forEach(r => {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.stroke();
+        });
+
+        // Croix centrale
+        ctx.beginPath();
+        ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height);
+        ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy);
+        ctx.strokeStyle = 'rgba(255, 204, 0, 0.1)';
+        ctx.stroke();
+
+        // Balayage radar animé
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angle);
+        const gradient = ctx.createLinearGradient(0, 0, maxR, 0);
+        gradient.addColorStop(0, 'rgba(255, 204, 0, 0.4)');
+        gradient.addColorStop(1, 'rgba(255, 204, 0, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, maxR, 0, 0.5);
+        ctx.lineTo(0, 0);
+        ctx.fill();
+        ctx.restore();
+
+        // Satellites simulés en orbite
+        const sats = [
+            { distance: 50, theta: angle * 1.5, name: 'GPS-SV 03' },
+            { distance: 85, theta: -angle * 0.8 + 1, name: 'GALILEO 21' },
+            { distance: 30, theta: angle * 2 - 0.5, name: 'GLONASS 7' },
+            { distance: 95, theta: -angle * 1.2 + 2, name: 'QZS-1 (Quasi-Sat)' }
+        ];
+
+        sats.forEach(s => {
+            const sx = cx + Math.cos(s.theta) * s.distance;
+            const sy = cy + Math.sin(s.theta) * s.distance;
+            ctx.fillStyle = '#ffcc00';
+            ctx.beginPath();
+            ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.font = '9px monospace';
+            ctx.fillText(s.name, sx + 5, sy - 3);
+        });
+
+        // Position centrale (Utilisateur / Station au sol)
+        ctx.fillStyle = '#00ff88';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        angle += 0.02;
+        requestAnimationFrame(drawRadar);
+    }
+    drawRadar();
+
+    // Gestion GPS
+    function toggleTracking() {
+        const btn = document.getElementById('btn-lock');
+        const statusBadge = document.getElementById('gps-status');
+
+        if (!isTracking) {
+            if (!navigator.geolocation) {
+                alert("La géolocalisation n'est pas supportée par votre navigateur.");
+                return;
+            }
+            logMessage("Demande d'accès GPS en cours...");
+            statusBadge.innerText = "Acquisition...";
+            statusBadge.style.color = "#ffcc00";
+            statusBadge.style.borderColor = "rgba(255, 204, 0, 0.3)";
+            statusBadge.style.background = "rgba(255, 204, 0, 0.15)";
+
+            watchId = navigator.geolocation.watchPosition(
+                position => {
+                    isTracking = true;
+                    btn.innerText = "Arrêter GPS";
+                    btn.style.background = "#ff4444";
+                    statusBadge.innerText = "Connecté (Fix 3D)";
+                    statusBadge.style.color = "#00ff88";
+                    statusBadge.style.borderColor = "rgba(0, 255, 136, 0.3)";
+                    statusBadge.style.background = "rgba(0, 255, 136, 0.15)";
+
+                    const lat = position.coords.latitude.toFixed(6);
+                    const lon = position.coords.longitude.toFixed(6);
+                    const alt = position.coords.altitude ? position.coords.altitude.toFixed(1) + " m" : "N/A";
+                    const acc = position.coords.accuracy.toFixed(1) + " m";
+                    const speed = position.coords.speed ? (position.coords.speed * 3.6).toFixed(1) + " km/h" : "0 km/h";
+                    const heading = position.coords.heading ? position.coords.heading.toFixed(0) + "°" : "0°";
+
+                    document.getElementById('val-lat').innerText = lat;
+                    document.getElementById('val-lon').innerText = lon;
+                    document.getElementById('val-alt').innerText = alt;
+                    document.getElementById('val-acc').innerText = acc;
+                    document.getElementById('val-speed').innerText = speed;
+                    document.getElementById('val-heading').innerText = heading;
+
+                    logMessage(`Fix GPS mis à jour : Lat ${lat}, Lon ${lon} (Précision: ${acc})`);
+                },
+                error => {
+                    logMessage(`Erreur GPS [${error.code}] : ${error.message}`);
+                    statusBadge.innerText = "Erreur Signal";
+                    statusBadge.style.color = "#ff4444";
+                },
+                { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
+            );
+        } else {
+            navigator.geolocation.clearWatch(watchId);
+            isTracking = false;
+            btn.innerText = "Activer GPS Continu";
+            btn.style.background = "var(--accent-yellow)";
+            statusBadge.innerText = "En attente";
+            statusBadge.style.color = "var(--text-muted)";
+            statusBadge.style.borderColor = "var(--border-color)";
+            statusBadge.style.background = "transparent";
+            logMessage("Suivi GPS arrêté.");
+        }
+    }
+
+    function exportData() {
+        const text = logBox.innerText;
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `OrbitalGPS_Log_${Date.now()}.txt`;
+        a.click();
+        logMessage("Rapport de télémétrie exporté.");
+    }
+</script>
+
+</body>
+</html>
