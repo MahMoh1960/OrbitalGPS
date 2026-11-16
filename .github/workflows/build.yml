@@ -27,10 +27,9 @@ jobs:
       - name: Installation de Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      - name: Configuration manuelle de Bubblewrap
+      - name: Configuration de Bubblewrap et Gradle
         run: |
           mkdir -p ~/.bubblewrap
-          # Utilisation du chemin exact vers cmdline-tools/latest
           cat > ~/.bubblewrap/config.json <<EOF
           {
             "jdkPath": "$JAVA_HOME",
@@ -38,20 +37,29 @@ jobs:
           }
           EOF
           
-          # Diagnostic optionnel : vérifie où se trouve exactement sdkmanager
-          echo "=== Vérification du SDK Android ==="
-          ls -la /usr/local/lib/android/sdk/cmdline-tools/
+          # Création d'un fichier gradle.properties pour augmenter la mémoire
+          # et éviter les erreurs de compilation Groovy
+          mkdir -p twa
+          cat > twa/gradle.properties <<EOF
+          org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m
+          android.useAndroidX=true
+          android.enableJetifier=true
+          EOF
+
+      - name: Nettoyage du cache Gradle
+        run: |
+          # Supprime les caches Gradle potentiellement corrompus
+          rm -rf ~/.gradle
+          # Vérifie la version de Java utilisée
+          java -version
 
       - name: Génération du keystore de signature
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          mkdir -p twa
           if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "Utilisation du keystore fourni dans les secrets."
             echo "$KEYSTORE_BASE64" | base64 -d > twa/android.keystore
           else
-            echo "Aucun keystore trouvé. Génération d'un keystore de debug..."
             keytool -genkeypair -v -keystore twa/android.keystore \
               -alias android -keyalg RSA -keysize 2048 -validity 10000 \
               -storepass password -keypass password \
@@ -94,6 +102,8 @@ jobs:
           BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'password' }}
         run: |
           cd twa
+          # Suppression du cache Gradle local au projet
+          rm -rf .gradle
           yes | bubblewrap build --skipPwaValidation
 
       - name: Téléversement de l'APK généré
