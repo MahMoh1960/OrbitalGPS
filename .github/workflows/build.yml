@@ -27,9 +27,16 @@ jobs:
       - name: Installation de Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
+      - name: Nettoyage complet des caches
+        run: |
+          rm -rf ~/.gradle
+          rm -rf ~/.bubblewrap
+          rm -rf ~/.android
+
       - name: Configuration de Bubblewrap et Gradle
         run: |
           mkdir -p ~/.bubblewrap
+          # Chemin exact vers cmdline-tools/latest qui contient bin/sdkmanager
           cat > ~/.bubblewrap/config.json <<EOF
           {
             "jdkPath": "$JAVA_HOME",
@@ -37,21 +44,12 @@ jobs:
           }
           EOF
           
-          # Création d'un fichier gradle.properties pour augmenter la mémoire
-          # et éviter les erreurs de compilation Groovy
           mkdir -p twa
           cat > twa/gradle.properties <<EOF
           org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m
           android.useAndroidX=true
           android.enableJetifier=true
           EOF
-
-      - name: Nettoyage du cache Gradle
-        run: |
-          # Supprime les caches Gradle potentiellement corrompus
-          rm -rf ~/.gradle
-          # Vérifie la version de Java utilisée
-          java -version
 
       - name: Génération du keystore de signature
         env:
@@ -102,7 +100,6 @@ jobs:
           BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'password' }}
         run: |
           cd twa
-          # Suppression du cache Gradle local au projet
           rm -rf .gradle
           yes | bubblewrap build --skipPwaValidation
 
