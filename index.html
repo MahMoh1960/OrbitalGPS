@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OrbitalGPS - Carnet & Positionnement Satellite</title>
+    <title>OrbitalGPS - Carnet, Surfaces & Qibla</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b192c">
     <style>
@@ -128,7 +128,7 @@
         .radar-container {
             position: relative;
             width: 100%;
-            height: 200px;
+            height: 220px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -147,14 +147,15 @@
             gap: 10px;
         }
 
+        /* RÈGLE DEMANDÉE : Boutons en JAUNE avec TEXTE NOIR LISIBLE */
         button {
             flex: 1;
             background: var(--accent-yellow);
-            color: var(--bg-primary);
+            color: #000000; /* Texte noir sur fond jaune */
             border: none;
             border-radius: 8px;
             padding: 12px;
-            font-weight: 700;
+            font-weight: 800;
             font-size: 0.9rem;
             cursor: pointer;
             transition: opacity 0.2s;
@@ -178,7 +179,6 @@
             box-shadow: 0 4px 10px rgba(255, 68, 68, 0.3);
         }
 
-        /* Façade de saisie du Bloc-notes */
         .form-group {
             display: flex;
             flex-direction: column;
@@ -210,8 +210,9 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            max-height: 220px;
+            max-height: 200px;
             overflow-y: auto;
+            margin-bottom: 12px;
         }
 
         .saved-item {
@@ -260,6 +261,22 @@
             flex: unset;
         }
 
+        .calc-result {
+            background: rgba(11, 25, 44, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .calc-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-yellow);
+            font-family: monospace;
+        }
+
         .logs {
             font-family: monospace;
             font-size: 0.75rem;
@@ -285,7 +302,7 @@
 <div class="container">
     <header>
         <h1>OrbitalGPS Telemetry</h1>
-        <p>Positionnement & Carnet Géodésique</p>
+        <p>Positionnement, Carnet, Surfaces & Qibla</p>
     </header>
 
     <!-- Section GPS Temps Réel -->
@@ -316,8 +333,8 @@
                 <div id="val-speed" class="stat-value">-- km/h</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">Cap (Azimut)</div>
-                <div id="val-heading" class="stat-value">--°</div>
+                <div class="stat-label">Cap Qibla</div>
+                <div id="val-qibla" class="stat-value highlight">--°</div>
             </div>
         </div>
     </div>
@@ -325,40 +342,59 @@
     <!-- Contrôles GPS -->
     <div class="controls">
         <button id="btn-lock" onclick="toggleTracking()">Activer GPS Continu</button>
-        <button class="secondary" onclick="exportLogs()">Exporter Log</button>
     </div>
 
-    <!-- FAÇADE DE SAISIE DU BLOC-NOTES -->
+    <!-- Carnet & Façade de Saisie -->
     <div class="card">
         <div class="card-title">
-            <span>Façade de Saisie & Carnet</span>
+            <span>Carnet & Coins de Terrain</span>
         </div>
         <div class="form-group">
-            <label for="waypoint-name">Nom personnalisé du lieu où l'on est :</label>
-            <input type="text" id="waypoint-name" placeholder="Ex: FSJES Marrakech, Station Alpha, Point de repère...">
-            <button onclick="saveCurrentPosition()">Enregistrer la position actuelle</button>
+            <label for="waypoint-name">Nom du point ou coin de terrain :</label>
+            <input type="text" id="waypoint-name" placeholder="Ex: Coin Nord-Est, Puits, Borne 1...">
+            <button onclick="saveCurrentPosition()">Mémoriser ce point</button>
         </div>
-        <div style="font-size: 0.8rem; color: var(--accent-yellow); margin-bottom: 8px; font-weight: 600;">Positions Mémorisées & Distances :</div>
+        <div style="font-size: 0.8rem; color: var(--accent-yellow); margin-bottom: 8px; font-weight: 600;">Waypoints Enregistrés :</div>
         <div id="saved-list" class="saved-list">
-            <!-- Liste dynamique des waypoints -->
+            <!-- Rempli dynamiquement -->
+        </div>
+
+        <!-- Boutons d'exportation / importation JSON demandés -->
+        <div class="controls" style="margin-top: 10px;">
+            <button onclick="exportJSON()">Exporter JSON</button>
+            <button class="secondary" onclick="document.getElementById('import-file').click()">Importer JSON</button>
+            <input type="file" id="import-file" style="display:none" accept=".json" onchange="importJSON(event)">
         </div>
     </div>
 
-    <!-- Section Radar LEO -->
+    <!-- Module Calcul de Surface -->
     <div class="card">
         <div class="card-title">
-            <span>Radar Orbital (LEO Sim)</span>
+            <span>Calculateur de Surface (Terrain)</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Estime la superficie du polygone formé par vos points enregistrés (minimum 3 coins).</p>
+        <button onclick="calculateLandArea()">Calculer la superficie</button>
+        <div class="calc-result">
+            <div class="stat-label">Superficie Estimée</div>
+            <div id="area-result" class="calc-value">-- m² (-- ha)</div>
+        </div>
+    </div>
+
+    <!-- Section Radar LEO & Qibla -->
+    <div class="card">
+        <div class="card-title">
+            <span>Radar Orbital & Qibla (Kaaba)</span>
             <span style="font-size: 0.75rem; color: var(--text-muted);">Alt: ~550 km</span>
         </div>
         <div class="radar-container">
-            <canvas id="radarCanvas" width="260" height="200"></canvas>
+            <canvas id="radarCanvas" width="260" height="220"></canvas>
         </div>
     </div>
 
     <!-- Journaux -->
     <div class="card" style="padding: 10px;">
         <div class="card-title" style="margin-bottom: 6px; font-size: 0.8rem;">Flux de Télémétrie</div>
-        <div id="log-box" class="logs">[SYSTEM] Prêt. Activez le GPS pour enregistrer vos coordonnées.</div>
+        <div id="log-box" class="logs">[SYSTEM] Prêt. Données sauvegardées en local (LocalStorage & JSON).</div>
     </div>
 
     <footer>OrbitalGPS PWA • Android APK Ready</footer>
@@ -376,9 +412,9 @@
         logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // Formule de Haversine pour distance géodésique
+    // Formule Haversine
     function calculateDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371; // Rayon terre en km
+        const R = 6371000; // en mètres
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -386,6 +422,20 @@
                   Math.sin(dLon/2) * Math.sin(dLon/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         return R * c;
+    }
+
+    // Calcul de l'azimut de la Qibla vers La Mecque (Kaaba: 21.4225° N, 39.8262° E)
+    function calculateQibla(lat, lon) {
+        const kaabaLat = 21.4225 * Math.PI / 180;
+        const kaabaLon = 39.8262 * Math.PI / 180;
+        const phi = lat * Math.PI / 180;
+        const lambda = lon * Math.PI / 180;
+        
+        const y = Math.sin(kaabaLon - lambda);
+        const x = Math.cos(phi) * Math.tan(kaabaLat) - Math.sin(phi) * Math.cos(kaabaLon - lambda);
+        let qiblaRad = Math.atan2(y, x);
+        let qiblaDeg = qiblaRad * 180 / Math.PI;
+        return (qiblaDeg + 360) % 360;
     }
 
     // Gestion du carnet de positions (localStorage)
@@ -396,22 +446,22 @@
         listContainer.innerHTML = '';
 
         if (waypoints.length === 0) {
-            listContainer.innerHTML = '<div style="text-align:center; color: var(--text-muted); font-size: 0.8rem; padding: 10px;">Aucun point mémorisé. Saisissez un nom et cliquez sur enregistrer.</div>';
+            listContainer.innerHTML = '<div style="text-align:center; color: var(--text-muted); font-size: 0.8rem; padding: 10px;">Aucun point mémorisé.</div>';
             return;
         }
 
         waypoints.forEach((wp, index) => {
-            let distText = "-- km";
+            let distText = "-- m";
             if (currentCoords.lat !== null && currentCoords.lon !== null) {
                 const dist = calculateDistance(currentCoords.lat, currentCoords.lon, wp.lat, wp.lon);
-                distText = dist < 1 ? (dist * 1000).toFixed(0) + " m" : dist.toFixed(2) + " km";
+                distText = dist < 1000 ? dist.toFixed(0) + " m" : (dist / 1000).toFixed(2) + " km";
             }
 
             const item = document.createElement('div');
             item.className = 'saved-item';
             item.innerHTML = `
                 <div class="saved-item-header">
-                    <span class="saved-title">${wp.name}</span>
+                    <span class="saved-title">#${index + 1} - ${wp.name}</span>
                     <button class="delete-btn" onclick="deleteWaypoint(${index})">Supprimer</button>
                 </div>
                 <div class="saved-coords">Lat: ${wp.lat.toFixed(6)}, Lon: ${wp.lon.toFixed(6)}</div>
@@ -426,14 +476,14 @@
 
     function saveCurrentPosition() {
         if (currentCoords.lat === null || currentCoords.lon === null) {
-            alert("Veuillez d'abord activer le GPS pour fixer votre position actuelle sur Terre.");
+            alert("Veuillez d'abord activer le GPS pour fixer votre position.");
             return;
         }
         const nameInput = document.getElementById('waypoint-name');
         const customName = nameInput.value.trim();
         
         if (!customName) {
-            alert("Veuillez saisir un nom dans la façade dédiée pour identifier l'endroit où vous vous trouvez.");
+            alert("Veuillez donner un nom à ce point ou coin de terrain.");
             nameInput.focus();
             return;
         }
@@ -443,36 +493,108 @@
             lat: currentCoords.lat,
             lon: currentCoords.lon,
             alt: currentCoords.alt !== null ? currentCoords.alt.toFixed(1) + " m" : "N/A",
-            date: new Date().toLocaleString()
+            date: new Date().toISOString()
         });
 
         localStorage.setItem('orbital_waypoints', JSON.stringify(waypoints));
         nameInput.value = '';
         renderWaypoints();
-        logMessage(`Waypoint "${customName}" mémorisé avec succès.`);
+        logMessage(`Point "${customName}" enregistré.`);
     }
 
     function deleteWaypoint(index) {
         waypoints.splice(index, 1);
         localStorage.setItem('orbital_waypoints', JSON.stringify(waypoints));
         renderWaypoints();
-        logMessage("Waypoint supprimé du carnet.");
+        logMessage("Point supprimé.");
     }
 
-    // Radar LEO Canvas
+    // --- EXPORT ET IMPORT JSON ---
+    function exportJSON() {
+        if (waypoints.length === 0) {
+            alert("Aucun enregistrement à exporter.");
+            return;
+        }
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(waypoints, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `OrbitalGPS_Backup_${Date.now()}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        logMessage("Export JSON réussi (sauvegarde sécurisée hors APK).");
+    }
+
+    function importJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (Array.isArray(imported)) {
+                    waypoints = imported;
+                    localStorage.setItem('orbital_waypoints', JSON.stringify(waypoints));
+                    renderWaypoints();
+                    logMessage(`Import réussi : ${waypoints.length} points chargés.`);
+                    alert(`Importation réussie : ${waypoints.length} points restaurés.`);
+                } else {
+                    alert("Format de fichier JSON invalide.");
+                }
+            } catch (err) {
+                alert("Erreur lors de la lecture du fichier JSON.");
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = ''; // Reset file input
+    }
+
+    // --- CALCULATEUR DE SURFACE (Formule géodésique par polygones) ---
+    function calculateLandArea() {
+        if (waypoints.length < 3) {
+            alert("Veuillez enregistrer au moins 3 points (coins de terrain) pour calculer une surface.");
+            return;
+        }
+        // Conversion approximative en mètres plans locaux par rapport au premier point
+        const lat0 = waypoints[0].lat;
+        const lon0 = waypoints[0].lon;
+        const metersPerLat = 111320;
+        const metersPerLon = 111320 * Math.cos(lat0 * Math.PI / 180);
+
+        let coordsXY = waypoints.map(wp => ({
+            x: (wp.lon - lon0) * metersPerLon,
+            y: (wp.lat - lat0) * metersPerLat
+        }));
+
+        let area = 0;
+        const n = coordsXY.length;
+        for (let i = 0; i < n; i++) {
+            let j = (i + 1) % n;
+            area += coordsXY[i].x * coordsXY[j].y;
+            area -= coordsXY[j].x * coordsXY[i].y;
+        }
+        area = Math.abs(area) / 2.0;
+        let hectares = area / 10000;
+
+        document.getElementById('area-result').innerText = `${area.toFixed(1)} m² (${hectares.toFixed(4)} ha)`;
+        logMessage(`Surface calculée : ${area.toFixed(1)} m².`);
+    }
+
+    // Canvas Radar & Qibla
     const canvas = document.getElementById('radarCanvas');
     const ctx = canvas.getContext('2d');
     let angle = 0;
+    let currentQibla = 0;
 
     function drawRadar() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const cx = canvas.width / 2;
         const cy = canvas.height / 2;
-        const maxR = 85;
+        const maxR = 90;
 
         ctx.strokeStyle = 'rgba(255, 204, 0, 0.15)';
         ctx.lineWidth = 1;
-        [28, 56, 85].forEach(r => {
+        [30, 60, 90].forEach(r => {
             ctx.beginPath();
             ctx.arc(cx, cy, r, 0, Math.PI * 2);
             ctx.stroke();
@@ -483,6 +605,20 @@
         ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy);
         ctx.strokeStyle = 'rgba(255, 204, 0, 0.1)';
         ctx.stroke();
+
+        // Indicateur Qibla (Aiguille vers la Kaaba)
+        if (currentQibla > 0) {
+            const qRad = (currentQibla - 90) * Math.PI / 180;
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(qRad) * 75, cy + Math.sin(qRad) * 75);
+            ctx.stroke();
+            ctx.fillStyle = '#00ff88';
+            ctx.font = '10px monospace';
+            ctx.fillText('QIBLA', cx + Math.cos(qRad) * 50 - 15, cy + Math.sin(qRad) * 50 - 5);
+        }
 
         ctx.save();
         ctx.translate(cx, cy);
@@ -497,24 +633,6 @@
         ctx.lineTo(0, 0);
         ctx.fill();
         ctx.restore();
-
-        const sats = [
-            { distance: 40, theta: angle * 1.5, name: 'GPS-SV 03' },
-            { distance: 70, theta: -angle * 0.8 + 1, name: 'GALILEO 21' },
-            { distance: 22, theta: angle * 2 - 0.5, name: 'GLONASS 7' }
-        ];
-
-        sats.forEach(s => {
-            const sx = cx + Math.cos(s.theta) * s.distance;
-            const sy = cy + Math.sin(s.theta) * s.distance;
-            ctx.fillStyle = '#ffcc00';
-            ctx.beginPath();
-            ctx.arc(sx, sy, 3, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            ctx.font = '9px monospace';
-            ctx.fillText(s.name, sx + 5, sy - 3);
-        });
 
         ctx.fillStyle = '#00ff88';
         ctx.beginPath();
@@ -536,7 +654,7 @@
                 alert("La géolocalisation n'est pas supportée.");
                 return;
             }
-            logMessage("Connexion au module GPS en cours...");
+            logMessage("Activation du GPS...");
             statusBadge.innerText = "Recherche...";
 
             watchId = navigator.geolocation.watchPosition(
@@ -544,23 +662,26 @@
                     isTracking = true;
                     btn.innerText = "Arrêter GPS";
                     btn.style.background = "#ff4444";
+                    btn.style.color = "#ffffff";
                     statusBadge.innerText = "Fix 3D Actif";
 
                     currentCoords.lat = position.coords.latitude;
                     currentCoords.lon = position.coords.longitude;
                     currentCoords.alt = position.coords.altitude;
 
+                    currentQibla = calculateQibla(currentCoords.lat, currentCoords.lon);
+
                     document.getElementById('val-lat').innerText = currentCoords.lat.toFixed(6);
                     document.getElementById('val-lon').innerText = currentCoords.lon.toFixed(6);
                     document.getElementById('val-alt').innerText = currentCoords.alt ? currentCoords.alt.toFixed(1) + " m" : "N/A";
                     document.getElementById('val-acc').innerText = position.coords.accuracy.toFixed(1) + " m";
                     document.getElementById('val-speed').innerText = position.coords.speed ? (position.coords.speed * 3.6).toFixed(1) + " km/h" : "0 km/h";
-                    document.getElementById('val-heading').innerText = position.coords.heading ? position.coords.heading.toFixed(0) + "°" : "0°";
+                    document.getElementById('val-qibla').innerText = currentQibla.toFixed(1) + "°";
 
                     renderWaypoints();
                 },
                 error => {
-                    logMessage(`Erreur GPS [${error.code}] : ${error.message}`);
+                    logMessage(`Erreur GPS : ${error.message}`);
                     statusBadge.innerText = "Erreur Signal";
                 },
                 { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
@@ -570,20 +691,10 @@
             isTracking = false;
             btn.innerText = "Activer GPS Continu";
             btn.style.background = "var(--accent-yellow)";
+            btn.style.color = "#000000";
             statusBadge.innerText = "En attente";
-            logMessage("Suivi GPS arrêté.");
+            logMessage("GPS arrêté.");
         }
-    }
-
-    function exportLogs() {
-        const text = logBox.innerText + "\n\n--- CARNET DE WAYPOINTS ---\n" + JSON.stringify(waypoints, null, 2);
-        const blob = new Blob([text], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `OrbitalGPS_Waypoints_${Date.now()}.txt`;
-        a.click();
-        logMessage("Rapport et positions exportés.");
     }
 
     renderWaypoints();
