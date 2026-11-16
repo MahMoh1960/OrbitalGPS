@@ -7,16 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b192c">
     <style>
-        :root {
-            --bg-primary: #0b192c;
-            --bg-card: #132238;
-            --accent-yellow: #ffcc00;
-            --text-main: #ffffff;
-            --text-muted: #8aa4c4;
-            --border-color: rgba(255, 204, 0, 0.2);
-            --success-green: #00ff88;
-            --danger-red: #ff4444;
-        }
+        :root { --bg-primary: #0b192c; --bg-card: #132238; --accent-yellow: #ffcc00; --text-main: #ffffff; --text-muted: #8aa4c4; --border-color: rgba(255, 204, 0, 0.2); --success-green: #00ff88; --danger-red: #ff4444; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-primary); color: var(--text-main); min-height: 100vh; padding: 12px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 16px; }
@@ -34,13 +25,13 @@
         .visual-container { position: relative; width: 100%; height: 220px; display: flex; justify-content: center; align-items: center; background: #07101c; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
         canvas { display: block; }
         .controls { display: flex; gap: 10px; }
-        .custom-btn { flex: 1; background-color: #ffcc00 !important; color: #000000 !important; -webkit-text-fill-color: #000000 !important; border: none; border-radius: 8px; padding: 14px; font-weight: 900 !important; font-size: 0.95rem; text-align: center; cursor: pointer; box-shadow: 0 4px 10px rgba(255, 204, 0, 0.3); user-select: none; -webkit-user-select: none; text-shadow: none !important; }
-        .custom-btn * { color: #000000 !important; -webkit-text-fill-color: #000000 !important; text-shadow: none !important; }
-        .custom-btn:active { opacity: 0.8; }
-        .custom-btn.is-tracking { background-color: #ffcc00 !important; color: #000000 !important; -webkit-text-fill-color: #000000 !important; outline: 2px solid #000000; outline-offset: -2px; }
-        .custom-btn.secondary { background-color: transparent !important; color: #ffcc00 !important; -webkit-text-fill-color: #ffcc00 !important; border: 1px solid #ffcc00; box-shadow: none; }
-        .custom-btn.secondary * { color: #ffcc00 !important; -webkit-text-fill-color: #ffcc00 !important; }
-        .custom-btn.danger { background-color: var(--danger-red) !important; color: #ffffff !important; box-shadow: 0 4px 10px rgba(255, 68, 68, 0.3); }
+        /* NOIR SUR JAUNE - FORCÉ EN 3 COUCHES : CSS + STYLE INLINE + JS */
+        .custom-btn { flex: 1; background: #ffcc00 !important; background-color: #ffcc00 !important; color: #000000 !important; -webkit-text-fill-color: #000000 !important; border: none !important; border-radius: 8px; padding: 14px; font-weight: 900 !important; font-size: 0.95rem; text-align: center; cursor: pointer; box-shadow: 0 4px 10px rgba(255, 204, 0, 0.3); user-select: none; -webkit-user-select: none; text-shadow: none !important; forced-color-adjust: none; }
+        .custom-btn *, .custom-btn span, .custom-btn div { color: #000000 !important; -webkit-text-fill-color: #000000 !important; background: transparent !important; text-shadow: none !important; }
+        .custom-btn:active, .custom-btn:hover, .custom-btn:focus, .custom-btn:visited { background: #ffcc00 !important; background-color: #ffcc00 !important; color: #000000 !important; -webkit-text-fill-color: #000000 !important; }
+        .custom-btn.secondary { background: transparent !important; background-color: transparent !important; color: #ffcc00 !important; -webkit-text-fill-color: #ffcc00 !important; border: 1px solid #ffcc00 !important; box-shadow: none; }
+        .custom-btn.secondary *, .custom-btn.secondary span { color: #ffcc00 !important; -webkit-text-fill-color: #ffcc00 !important; }
+        .custom-btn.danger { background: var(--danger-red) !important; background-color: var(--danger-red) !important; color: #ffffff !important; }
         .form-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
         label { font-size: 0.8rem; color: var(--text-muted); }
         input[type="text"] { width: 100%; background: rgba(11, 25, 44, 0.9); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; color: var(--text-main); font-size: 1rem; outline: none; }
@@ -59,14 +50,20 @@
         footer { text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; }
         .qibla-guide { font-size: 0.85rem; font-weight: 700; text-align: center; margin-top: 8px; color: #ffffff; }
         .qibla-guide.ok { color: #00ff88; }
+        .qibla-top { font-size: 1.05rem; font-weight: 700; color: #ffffff; text-align: center; margin-bottom: 8px; font-family: monospace; }
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: rgba(11,25,44,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+        .toggle-row span { font-size: 0.9rem; color: #ffffff; line-height: 1.3; max-width: 70%; }
+        .switch { position: relative; width: 52px; height: 28px; flex-shrink: 0; display: inline-block; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #2a3a52; border-radius: 28px; transition: 0.2s; }
+        .slider:before { content: ""; position: absolute; width: 22px; height: 22px; left: 3px; top: 3px; background: #ffffff; border-radius: 50%; transition: 0.2s; }
+        .switch input:checked + .slider { background: #1a73e8; }
+        .switch input:checked + .slider:before { transform: translateX(24px); }
     </style>
 </head>
 <body>
 <div class="container">
-    <header>
-        <h1>OrbitalGPS Telemetry</h1>
-        <p>Positionnement, Carnet, Surfaces, Radar & Qibla</p>
-    </header>
+    <header><h1>OrbitalGPS Telemetry</h1><p>Positionnement, Carnet, Surfaces, Radar & Qibla</p></header>
     <div class="card">
         <div class="card-title"><span>Fixation GPS Terrestre</span><span id="gps-status" class="status-badge">En attente</span></div>
         <div class="grid-stats">
@@ -78,33 +75,34 @@
             <div class="stat-box"><div class="stat-label">Cap Boussole</div><div id="val-heading" class="stat-value">--°</div></div>
         </div>
     </div>
-    <div class="controls"><div id="btn-lock" class="custom-btn" onclick="toggleTracking()">Activer GPS & Capteurs</div></div>
+    <div class="controls"><div id="btn-lock" class="custom-btn" style="background:#ffcc00 !important; background-color:#ffcc00 !important; color:#000 !important; -webkit-text-fill-color:#000 !important;" onclick="toggleTracking()">Activer GPS & Capteurs</div></div>
     <div class="card">
         <div class="card-title"><span>Boussole Qibla Active (Kaaba)</span><span id="compass-status" style="font-size:0.75rem; color:var(--text-muted);">En attente capteur</span></div>
+        <div class="toggle-row"><span>Activer la localisation pour la fonctionnalité de la boussole</span><label class="switch"><input type="checkbox" id="toggle-loc" checked><span class="slider"></span></label></div>
+        <div class="qibla-top">Qibla: <span id="qibla-display">91°</span> (You: <span id="heading-display">--°</span>)</div>
         <div class="visual-container"><canvas id="compassCanvas" width="260" height="220"></canvas></div>
-        <div id="qibla-guide" class="qibla-guide">Active le GPS, puis tourne-toi jusqu'à ce que l'aiguille verte pointe en haut.</div>
-        <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 8px;">Le cadran tourne avec ton téléphone. L'aiguille verte pointe toujours vers la Kaaba à la Mecque.</p>
+        <div id="qibla-guide" class="qibla-guide">Active le GPS, puis tourne-toi jusqu'à ce que la flèche jaune pointe en haut.</div>
+        <div class="toggle-row" style="margin-top:10px;"><span>Activer La Vibration</span><label class="switch"><input type="checkbox" id="toggle-vib" checked><span class="slider"></span></label></div>
+        <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 8px;">Comme l'autre site : cadran fixe, Nord en haut, Kaaba au centre, flèche jaune vers la Mecque. Si ta boussole parait inversée, touche Inverser ci-dessous.</p>
+        <div class="custom-btn secondary" style="margin-top:8px; text-align:center;" onclick="toggleInvert()">Inverser boussole (si inversée)</div>
+        <p style="font-size: 0.7rem; color: var(--text-muted); text-align: center; margin-top: 6px;">Si l'autre site dit You: 12° et nous on dit You: 348°, clique Inverser une fois.</p>
     </div>
     <div class="card">
         <div class="card-title"><span>Carnet & Coins de Terrain</span></div>
-        <div class="form-group">
-            <label for="waypoint-name">Nom du point ou coin de terrain :</label>
-            <input type="text" id="waypoint-name" placeholder="Ex: Borne 1, Puits, Coin Nord...">
-            <div class="custom-btn" onclick="saveCurrentPosition()">Mémoriser ce point</div>
-        </div>
+        <div class="form-group"><label for="waypoint-name">Nom du point ou coin de terrain :</label><input type="text" id="waypoint-name" placeholder="Ex: Borne 1, Puits, Coin Nord..."><div class="custom-btn" style="background:#ffcc00 !important; background-color:#ffcc00 !important; color:#000 !important; -webkit-text-fill-color:#000 !important;" onclick="saveCurrentPosition()">Mémoriser ce point</div></div>
         <div style="font-size: 0.8rem; color: var(--accent-yellow); margin-bottom: 8px; font-weight: 600;">Waypoints Enregistrés :</div>
         <div id="saved-list" class="saved-list"></div>
         <label for="report-text">Récapitulatif textuel (copiable pour rapports) :</label>
         <textarea id="report-text" class="report-box" readonly>Aucun point enregistré.</textarea>
         <div class="controls" style="margin-top: 10px;">
-            <div class="custom-btn" onclick="exportJSON()">Exporter JSON</div>
+            <div class="custom-btn" style="background:#ffcc00 !important; background-color:#ffcc00 !important; color:#000 !important; -webkit-text-fill-color:#000 !important;" onclick="exportJSON()">Exporter JSON</div>
             <div class="custom-btn secondary" onclick="document.getElementById('import-file').click()">Importer JSON</div>
             <input type="file" id="import-file" style="display:none" accept=".json" onchange="importJSON(event)">
         </div>
     </div>
     <div class="card">
         <div class="card-title"><span>Calculateur de Surface (Terrain)</span></div>
-        <div class="custom-btn" onclick="calculateLandArea()">Calculer la superficie</div>
+        <div class="custom-btn" style="background:#ffcc00 !important; background-color:#ffcc00 !important; color:#000 !important; -webkit-text-fill-color:#000 !important;" onclick="calculateLandArea()">Calculer la superficie</div>
         <div class="calc-result"><div class="stat-label">Superficie Estimée</div><div id="area-result" class="calc-value">-- m² (-- ha)</div></div>
     </div>
     <div class="card">
@@ -113,7 +111,7 @@
     </div>
     <div class="card" style="padding: 10px;">
         <div class="card-title" style="margin-bottom: 6px; font-size: 0.8rem;">Flux de Télémétrie</div>
-        <div id="log-box" class="logs">[SYSTEM] Prêt. Noir sur Jaune strict & Qibla calculée vers Kaaba.</div>
+        <div id="log-box" class="logs">[SYSTEM] Prêt. Noir sur Jaune forcé & Qibla comme autre site.</div>
     </div>
     <footer>OrbitalGPS PWA • Android APK Ready</footer>
 </div>
@@ -123,104 +121,112 @@
     let currentCoords = { lat: 31.6295, lon: -7.9811 };
     let qiblaAngle = 0;
     let phoneHeading = 0;
+    let invertHeading = false;
+    let vibrationEnabled = true;
+    let hasVibrated = false;
     const logBox = document.getElementById('log-box');
-    function logMessage(msg) {
-        const time = new Date().toLocaleTimeString();
-        logBox.innerHTML += `<br>[${time}] ${msg}`;
-        logBox.scrollTop = logBox.scrollHeight;
-    }
+    function logMessage(msg) { const time = new Date().toLocaleTimeString(); logBox.innerHTML += `<br>[${time}] ${msg}`; logBox.scrollTop = logBox.scrollHeight; }
     function calculateDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371000;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const R = 6371000; const dLat = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c;
     }
     function calculateQibla(lat, lon) {
-        const kaabaLat = 21.422487 * Math.PI / 180;
-        const kaabaLon = 39.826206 * Math.PI / 180;
-        const latRad = lat * Math.PI / 180;
-        const lonRad = lon * Math.PI / 180;
-        const dLon = kaabaLon - lonRad;
+        const kaabaLat = 21.422487 * Math.PI / 180; const kaabaLon = 39.826206 * Math.PI / 180;
+        const latRad = lat * Math.PI / 180; const lonRad = lon * Math.PI / 180; const dLon = kaabaLon - lonRad;
         const y = Math.sin(dLon) * Math.cos(kaabaLat);
         const x = Math.cos(latRad) * Math.sin(kaabaLat) - Math.sin(latRad) * Math.cos(kaabaLat) * Math.cos(dLon);
-        let brg = Math.atan2(y, x) * 180 / Math.PI;
-        return (brg + 360) % 360;
+        let brg = Math.atan2(y, x) * 180 / Math.PI; return (brg + 360) % 360;
     }
     qiblaAngle = calculateQibla(currentCoords.lat, currentCoords.lon);
     document.getElementById('val-qibla').innerText = qiblaAngle.toFixed(1) + "°";
+    document.getElementById('qibla-display').innerText = qiblaAngle.toFixed(0) + "°";
+    function forceBlackOnYellow() {
+        document.querySelectorAll('.custom-btn:not(.secondary)').forEach(function(el) {
+            el.style.setProperty('background', '#ffcc00', 'important');
+            el.style.setProperty('background-color', '#ffcc00', 'important');
+            el.style.setProperty('color', '#000000', 'important');
+            el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
+            el.style.setProperty('text-shadow', 'none', 'important');
+            el.querySelectorAll('*').forEach(function(c) { c.style.setProperty('color', '#000000', 'important'); c.style.setProperty('-webkit-text-fill-color', '#000000', 'important'); });
+        });
+    }
+    forceBlackOnYellow(); setInterval(forceBlackOnYellow, 1000);
+    function toggleInvert() { invertHeading = !invertHeading; logMessage(invertHeading ? "Boussole inversée activée." : "Boussole normale."); }
     function initCompassSensors() {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            DeviceOrientationEvent.requestPermission().then(function(state) {
-                if (state === 'granted') { startOrientationListener(); } else { document.getElementById('compass-status').innerText = "Autorisation boussole refusée"; }
-            }).catch(function() { startOrientationListener(); });
+            DeviceOrientationEvent.requestPermission().then(function(state) { if (state === 'granted') { startOrientationListener(); } else { document.getElementById('compass-status').innerText = "Autorisation boussole refusée"; } }).catch(function() { startOrientationListener(); });
         } else { startOrientationListener(); }
+    }
+    function handleOrientation(event) {
+        let heading = null;
+        if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) { heading = event.webkitCompassHeading; }
+        else if (event.alpha !== null && event.alpha !== undefined) {
+            if (event.absolute === true) { heading = 360 - event.alpha; } else { heading = 360 - event.alpha; }
+        }
+        if (heading !== null && !isNaN(heading)) {
+            if (invertHeading) { heading = (360 - heading) % 360; }
+            phoneHeading = ((heading % 360) + 360) % 360;
+            document.getElementById('val-heading').innerText = phoneHeading.toFixed(0) + "°";
+            document.getElementById('heading-display').innerText = phoneHeading.toFixed(0) + "°";
+            document.getElementById('compass-status').innerText = "Capteur Actif";
+        }
     }
     function startOrientationListener() {
         if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => {
-                let heading = null;
-                if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) { heading = event.webkitCompassHeading; }
-                else if (event.alpha !== null && event.alpha !== undefined) { heading = 360 - event.alpha; }
-                if (heading !== null && !isNaN(heading)) {
-                    phoneHeading = ((heading % 360) + 360) % 360;
-                    document.getElementById('val-heading').innerText = phoneHeading.toFixed(0) + "°";
-                    document.getElementById('compass-status').innerText = "Capteur Actif";
-                }
-            }, true);
+            if ('ondeviceorientationabsolute' in window) { window.addEventListener('deviceorientationabsolute', handleOrientation, true); }
+            window.addEventListener('deviceorientation', handleOrientation, true);
         } else { document.getElementById('compass-status').innerText = "Capteurs non supportés"; }
     }
     const compassCanvas = document.getElementById('compassCanvas');
     const cCtx = compassCanvas.getContext('2d');
+    function drawKaaba(cx, cy) {
+        cCtx.save(); cCtx.translate(cx, cy);
+        cCtx.fillStyle = '#1a1a1a'; cCtx.beginPath(); cCtx.moveTo(-22, 10); cCtx.lineTo(-22, -12); cCtx.lineTo(0, -20); cCtx.lineTo(22, -12); cCtx.lineTo(22, 10); cCtx.lineTo(0, 18); cCtx.closePath(); cCtx.fill();
+        cCtx.fillStyle = '#000000'; cCtx.fillRect(-18, -8, 36, 22);
+        cCtx.fillStyle = '#ffcc00'; cCtx.fillRect(-4, -8, 8, 22);
+        cCtx.strokeStyle = 'rgba(255,255,255,0.25)'; cCtx.lineWidth = 1; cCtx.strokeRect(-18, -8, 36, 22);
+        cCtx.restore();
+    }
     function drawCompass() {
         cCtx.clearRect(0, 0, compassCanvas.width, compassCanvas.height);
-        const cx = compassCanvas.width / 2;
-        const cy = compassCanvas.height / 2;
-        const radius = 80;
-        cCtx.strokeStyle = 'rgba(255, 204, 0, 0.3)';
-        cCtx.lineWidth = 2;
-        cCtx.beginPath(); cCtx.arc(cx, cy, radius, 0, Math.PI * 2); cCtx.stroke();
-        cCtx.save(); cCtx.translate(cx, cy); cCtx.rotate(-phoneHeading * Math.PI / 180);
+        const cx = compassCanvas.width / 2; const cy = compassCanvas.height / 2; const radius = 80;
+        cCtx.fillStyle = '#ffffff'; cCtx.beginPath(); cCtx.arc(cx, cy, radius + 10, 0, Math.PI * 2); cCtx.fill();
+        cCtx.fillStyle = '#4aa3df'; cCtx.beginPath(); cCtx.arc(cx, cy, radius + 4, 0, Math.PI * 2); cCtx.fill();
+        cCtx.fillStyle = '#d6efff'; cCtx.beginPath(); cCtx.arc(cx, cy, radius - 6, 0, Math.PI * 2); cCtx.fill();
         for (let a = 0; a < 360; a += 30) {
-            const rad = a * Math.PI / 180;
-            const x1 = Math.sin(rad) * (radius - 6); const y1 = -Math.cos(rad) * (radius - 6);
-            const x2 = Math.sin(rad) * radius; const y2 = -Math.cos(rad) * radius;
-            cCtx.strokeStyle = 'rgba(255,255,255,0.25)'; cCtx.lineWidth = 1;
-            cCtx.beginPath(); cCtx.moveTo(x1, y1); cCtx.lineTo(x2, y2); cCtx.stroke();
+            const rad = a * Math.PI / 180; const x1 = cx + Math.sin(rad) * (radius - 14); const y1 = cy - Math.cos(rad) * (radius - 14);
+            const x2 = cx + Math.sin(rad) * (radius - 6); const y2 = cy - Math.cos(rad) * (radius - 6);
+            cCtx.strokeStyle = '#4aa3df'; cCtx.lineWidth = 3; cCtx.beginPath(); cCtx.moveTo(x1, y1); cCtx.lineTo(x2, y2); cCtx.stroke();
         }
-        cCtx.fillStyle = '#ffcc00'; cCtx.font = 'bold 13px monospace'; cCtx.textAlign = 'center'; cCtx.textBaseline = 'middle';
-        cCtx.fillText('N', 0, -radius - 12);
-        cCtx.fillStyle = '#8aa4c4'; cCtx.fillText('E', radius + 12, 0); cCtx.fillText('S', 0, radius + 12); cCtx.fillText('W', -radius - 12, 0);
-        cCtx.restore();
+        cCtx.fillStyle = '#1a73e8'; cCtx.font = 'bold 11px monospace'; cCtx.textAlign = 'center'; cCtx.textBaseline = 'middle';
+        cCtx.fillText('N', cx, cy - radius + 2); cCtx.fillText('E', cx + radius - 2, cy); cCtx.fillText('S', cx, cy + radius - 2); cCtx.fillText('W', cx - radius + 2, cy);
+        drawKaaba(cx, cy);
         const relativeAngle = (qiblaAngle - phoneHeading) * Math.PI / 180;
         cCtx.save(); cCtx.translate(cx, cy); cCtx.rotate(relativeAngle);
-        cCtx.strokeStyle = '#00ff88'; cCtx.lineWidth = 4; cCtx.beginPath(); cCtx.moveTo(0, 0); cCtx.lineTo(0, -radius + 10); cCtx.stroke();
-        cCtx.fillStyle = '#00ff88'; cCtx.beginPath(); cCtx.moveTo(0, -radius + 5); cCtx.lineTo(-6, -radius + 20); cCtx.lineTo(6, -radius + 20); cCtx.closePath(); cCtx.fill(); cCtx.restore();
-        cCtx.fillStyle = '#ffcc00'; cCtx.beginPath(); cCtx.moveTo(cx, 6); cCtx.lineTo(cx - 6, 16); cCtx.lineTo(cx + 6, 16); cCtx.closePath(); cCtx.fill();
-        cCtx.fillStyle = '#ffcc00'; cCtx.beginPath(); cCtx.arc(cx, cy, 4, 0, Math.PI * 2); cCtx.fill();
+        cCtx.fillStyle = '#ffaa00'; cCtx.beginPath(); cCtx.moveTo(0, -72); cCtx.lineTo(-9, -52); cCtx.lineTo(9, -52); cCtx.closePath(); cCtx.fill();
+        cCtx.strokeStyle = '#ffffff'; cCtx.lineWidth = 1; cCtx.stroke();
+        cCtx.restore();
         const diff = ((qiblaAngle - phoneHeading + 540) % 360) - 180;
         const guide = document.getElementById('qibla-guide');
         if (guide) {
-            if (Math.abs(diff) <= 5) { guide.textContent = "Tu es face à la Qibla, alhamdoulillah."; guide.className = "qibla-guide ok"; }
-            else if (diff > 0) { guide.textContent = "Tourne à droite de " + Math.abs(diff).toFixed(0) + "° vers la Qibla."; guide.className = "qibla-guide"; }
-            else { guide.textContent = "Tourne à gauche de " + Math.abs(diff).toFixed(0) + "° vers la Qibla."; guide.className = "qibla-guide"; }
+            if (Math.abs(diff) <= 5) {
+                guide.textContent = "Tu es face à la Qibla, alhamdoulillah."; guide.className = "qibla-guide ok";
+                if (vibrationEnabled && !hasVibrated && navigator.vibrate) { navigator.vibrate(200); hasVibrated = true; }
+            } else if (diff > 0) { guide.textContent = "Tourne à droite de " + Math.abs(diff).toFixed(0) + "° vers la Qibla."; guide.className = "qibla-guide"; hasVibrated = false; }
+            else { guide.textContent = "Tourne à gauche de " + Math.abs(diff).toFixed(0) + "° vers la Qibla."; guide.className = "qibla-guide"; hasVibrated = false; }
         }
         requestAnimationFrame(drawCompass);
     }
     drawCompass();
-    const radarCanvas = document.getElementById('radarCanvas');
-    const rCtx = radarCanvas.getContext('2d');
-    let radarAngle = 0;
+    const radarCanvas = document.getElementById('radarCanvas'); const rCtx = radarCanvas.getContext('2d'); let radarAngle = 0;
     function drawRadar() {
         rCtx.clearRect(0, 0, radarCanvas.width, radarCanvas.height);
         const cx = radarCanvas.width / 2; const cy = radarCanvas.height / 2; const maxR = 85;
-        rCtx.strokeStyle = 'rgba(255, 204, 0, 0.15)'; rCtx.lineWidth = 1;
-        [28, 56, 85].forEach(r => { rCtx.beginPath(); rCtx.arc(cx, cy, r, 0, Math.PI * 2); rCtx.stroke(); });
+        rCtx.strokeStyle = 'rgba(255, 204, 0, 0.15)'; rCtx.lineWidth = 1; [28, 56, 85].forEach(r => { rCtx.beginPath(); rCtx.arc(cx, cy, r, 0, Math.PI * 2); rCtx.stroke(); });
         rCtx.beginPath(); rCtx.moveTo(cx, 0); rCtx.lineTo(cx, radarCanvas.height); rCtx.moveTo(0, cy); rCtx.lineTo(radarCanvas.width, cy); rCtx.strokeStyle = 'rgba(255, 204, 0, 0.1)'; rCtx.stroke();
         rCtx.save(); rCtx.translate(cx, cy); rCtx.rotate(radarAngle);
-        const gradient = rCtx.createLinearGradient(0, 0, maxR, 0);
-        gradient.addColorStop(0, 'rgba(255, 204, 0, 0.4)'); gradient.addColorStop(1, 'rgba(255, 204, 0, 0)');
+        const gradient = rCtx.createLinearGradient(0, 0, maxR, 0); gradient.addColorStop(0, 'rgba(255, 204, 0, 0.4)'); gradient.addColorStop(1, 'rgba(255, 204, 0, 0)');
         rCtx.fillStyle = gradient; rCtx.beginPath(); rCtx.moveTo(0, 0); rCtx.arc(0, 0, maxR, 0, 0.5); rCtx.lineTo(0, 0); rCtx.fill(); rCtx.restore();
         const sats = [{ distance: 40, theta: radarAngle * 1.5, name: 'GPS-SV 03' }, { distance: 70, theta: -radarAngle * 0.8 + 1, name: 'GALILEO 21' }, { distance: 22, theta: radarAngle * 2 - 0.5, name: 'GLONASS 7' }];
         sats.forEach(s => { const sx = cx + Math.cos(s.theta) * s.distance; const sy = cy + Math.sin(s.theta) * s.distance; rCtx.fillStyle = '#ffcc00'; rCtx.beginPath(); rCtx.arc(sx, sy, 3, 0, Math.PI * 2); rCtx.fill(); rCtx.fillStyle = 'rgba(255, 255, 255, 0.7)'; rCtx.font = '9px monospace'; rCtx.fillText(s.name, sx + 5, sy - 3); });
@@ -229,18 +235,12 @@
     }
     drawRadar();
     let waypoints = JSON.parse(localStorage.getItem('orbital_waypoints') || '[]');
-    function updateReportText() {
-        if (waypoints.length === 0) { document.getElementById('report-text').value = "Aucun point enregistré."; return; }
-        let txt = "--- RAPPORT COINS DE TERRAIN ---\n";
-        waypoints.forEach((wp, idx) => { txt += `#${idx+1} ${wp.name} | Lat: ${wp.lat.toFixed(6)}, Lon: ${wp.lon.toFixed(6)} | Alt: ${wp.alt}\n`; });
-        document.getElementById('report-text').value = txt;
-    }
+    function updateReportText() { if (waypoints.length === 0) { document.getElementById('report-text').value = "Aucun point enregistré."; return; } let txt = "--- RAPPORT COINS DE TERRAIN ---\n"; waypoints.forEach((wp, idx) => { txt += `#${idx+1} ${wp.name} | Lat: ${wp.lat.toFixed(6)}, Lon: ${wp.lon.toFixed(6)} | Alt: ${wp.alt}\n`; }); document.getElementById('report-text').value = txt; }
     function renderWaypoints() {
         const listContainer = document.getElementById('saved-list'); listContainer.innerHTML = '';
         if (waypoints.length === 0) { listContainer.innerHTML = '<div style="text-align:center; color: var(--text-muted); font-size: 0.8rem; padding: 10px;">Aucun point mémorisé.</div>'; updateReportText(); return; }
         waypoints.forEach((wp, index) => {
-            let distText = "-- m";
-            if (currentCoords.lat !== null) { const dist = calculateDistance(currentCoords.lat, currentCoords.lon, wp.lat, wp.lon); distText = dist < 1000 ? dist.toFixed(0) + " m" : (dist / 1000).toFixed(2) + " km"; }
+            let distText = "-- m"; if (currentCoords.lat !== null) { const dist = calculateDistance(currentCoords.lat, currentCoords.lon, wp.lat, wp.lon); distText = dist < 1000 ? dist.toFixed(0) + " m" : (dist / 1000).toFixed(2) + " km"; }
             const item = document.createElement('div'); item.className = 'saved-item';
             item.innerHTML = `<div class="saved-item-header"><span class="saved-title">#${index + 1} - ${wp.name}</span><div class="delete-btn" onclick="deleteWaypoint(${index})">Supprimer</div></div><div class="saved-coords">Lat: ${wp.lat.toFixed(6)}, Lon: ${wp.lon.toFixed(6)}</div><div class="saved-meta"><span>Alt: ${wp.alt}</span><span>Distance : <strong>${distText}</strong></span></div>`;
             listContainer.appendChild(item);
@@ -257,36 +257,29 @@
     function exportJSON() {
         if (waypoints.length === 0) { alert("Aucun enregistrement à exporter."); return; }
         const blob = new Blob([JSON.stringify(waypoints, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = `OrbitalGPS_Backup_${Date.now()}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+        const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `OrbitalGPS_Backup_${Date.now()}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
         logMessage("Export JSON réussi.");
     }
     function importJSON(event) {
-        const file = event.target.files[0]; if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try { const imported = JSON.parse(e.target.result); if (Array.isArray(imported)) { waypoints = imported; localStorage.setItem('orbital_waypoints', JSON.stringify(waypoints)); renderWaypoints(); logMessage(`Import réussi : ${waypoints.length} points.`); alert(`Importation réussie : ${waypoints.length} points.`); } else { alert("Format JSON invalide."); } }
-            catch (err) { alert("Erreur de lecture du JSON."); }
-        };
+        const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
+        reader.onload = function(e) { try { const imported = JSON.parse(e.target.result); if (Array.isArray(imported)) { waypoints = imported; localStorage.setItem('orbital_waypoints', JSON.stringify(waypoints)); renderWaypoints(); logMessage(`Import réussi : ${waypoints.length} points.`); alert(`Importation réussie : ${waypoints.length} points.`); } else { alert("Format JSON invalide."); } } catch (err) { alert("Erreur de lecture du JSON."); } };
         reader.readAsText(file); event.target.value = '';
     }
     function calculateLandArea() {
         if (waypoints.length < 3) { alert("Veuillez enregistrer au moins 3 points (coins de terrain)."); return; }
-        const lat0 = waypoints[0].lat; const lon0 = waypoints[0].lon;
-        const metersPerLat = 111320; const metersPerLon = 111320 * Math.cos(lat0 * Math.PI / 180);
+        const lat0 = waypoints[0].lat; const lon0 = waypoints[0].lon; const metersPerLat = 111320; const metersPerLon = 111320 * Math.cos(lat0 * Math.PI / 180);
         let coordsXY = waypoints.map(wp => ({ x: (wp.lon - lon0) * metersPerLon, y: (wp.lat - lat0) * metersPerLat }));
-        let area = 0; const n = coordsXY.length;
-        for (let i = 0; i < n; i++) { let j = (i + 1) % n; area += coordsXY[i].x * coordsXY[j].y; area -= coordsXY[j].x * coordsXY[i].y; }
-        area = Math.abs(area) / 2.0; let hectares = area / 10000;
-        document.getElementById('area-result').innerText = `${area.toFixed(1)} m² (${hectares.toFixed(4)} ha)`; logMessage(`Surface : ${area.toFixed(1)} m².`);
+        let area = 0; const n = coordsXY.length; for (let i = 0; i < n; i++) { let j = (i + 1) % n; area += coordsXY[i].x * coordsXY[j].y; area -= coordsXY[j].x * coordsXY[i].y; }
+        area = Math.abs(area) / 2.0; let hectares = area / 10000; document.getElementById('area-result').innerText = `${area.toFixed(1)} m² (${hectares.toFixed(4)} ha)`; logMessage(`Surface : ${area.toFixed(1)} m².`);
     }
     function toggleTracking() {
         const btn = document.getElementById('btn-lock'); const statusBadge = document.getElementById('gps-status');
         if (!isTracking) {
             if (!navigator.geolocation) { alert("La géolocalisation n'est pas supportée."); return; }
             initCompassSensors(); logMessage("Activation GPS et capteurs..."); statusBadge.innerText = "Recherche...";
+            const locToggle = document.getElementById('toggle-loc'); if (locToggle) locToggle.checked = true;
             watchId = navigator.geolocation.watchPosition(position => {
-                    isTracking = true; btn.innerText = "Arrêter Suivi"; btn.classList.add("is-tracking"); btn.style.backgroundColor = "#ffcc00"; btn.style.color = "#000000"; statusBadge.innerText = "Fix 3D Actif";
+                    isTracking = true; btn.innerText = "Arrêter Suivi"; forceBlackOnYellow(); statusBadge.innerText = "Fix 3D Actif";
                     currentCoords.lat = position.coords.latitude; currentCoords.lon = position.coords.longitude; currentCoords.alt = position.coords.altitude;
                     qiblaAngle = calculateQibla(currentCoords.lat, currentCoords.lon);
                     document.getElementById('val-lat').innerText = currentCoords.lat.toFixed(6);
@@ -294,16 +287,17 @@
                     document.getElementById('val-alt').innerText = currentCoords.alt ? currentCoords.alt.toFixed(1) + " m" : "N/A";
                     document.getElementById('val-acc').innerText = position.coords.accuracy.toFixed(1) + " m";
                     document.getElementById('val-qibla').innerText = qiblaAngle.toFixed(1) + "°";
+                    document.getElementById('qibla-display').innerText = qiblaAngle.toFixed(0) + "°";
                     renderWaypoints();
-                },
-                error => { logMessage(`Erreur GPS : ${error.message}`); statusBadge.innerText = "Erreur Signal"; },
-                { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
-            );
+                }, error => { logMessage(`Erreur GPS : ${error.message}`); statusBadge.innerText = "Erreur Signal"; }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 });
         } else {
-            navigator.geolocation.clearWatch(watchId); isTracking = false; btn.innerText = "Activer GPS & Capteurs"; btn.classList.remove("is-tracking"); btn.style.backgroundColor = "#ffcc00"; btn.style.color = "#000000"; statusBadge.innerText = "En attente"; logMessage("Suivi arrêté.");
+            navigator.geolocation.clearWatch(watchId); isTracking = false; btn.innerText = "Activer GPS & Capteurs"; forceBlackOnYellow(); statusBadge.innerText = "En attente"; logMessage("Suivi arrêté.");
+            const locToggle = document.getElementById('toggle-loc'); if (locToggle) locToggle.checked = false;
         }
     }
-    renderWaypoints();
+    document.getElementById('toggle-loc').addEventListener('change', function(e) { if (e.target.checked && !isTracking) { toggleTracking(); } else if (!e.target.checked && isTracking) { toggleTracking(); } });
+    document.getElementById('toggle-vib').addEventListener('change', function(e) { vibrationEnabled = e.target.checked; });
+    renderWaypoints(); forceBlackOnYellow();
 </script>
 </body>
 </html>
