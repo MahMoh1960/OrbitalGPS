@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OrbitalGPS - Télémétrie & Positionnement Satellite</title>
+    <title>OrbitalGPS - Télémétrie & Carnet Géodésique</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b192c">
     <style>
@@ -15,6 +15,7 @@
             --text-muted: #8aa4c4;
             --border-color: rgba(255, 204, 0, 0.2);
             --success-green: #00ff88;
+            --danger-red: #ff4444;
         }
 
         * {
@@ -124,11 +125,10 @@
             color: var(--accent-yellow);
         }
 
-        /* Radar Canvas Container */
         .radar-container {
             position: relative;
             width: 100%;
-            height: 240px;
+            height: 220px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -172,6 +172,88 @@
             box-shadow: none;
         }
 
+        button.danger {
+            background: var(--danger-red);
+            color: white;
+            box-shadow: 0 4px 10px rgba(255, 68, 68, 0.3);
+        }
+
+        /* Formulaires Bloc-notes */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: rgba(11, 25, 44, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-yellow);
+        }
+
+        .saved-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .saved-item {
+            background: rgba(11, 25, 44, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .saved-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .saved-title {
+            font-weight: 700;
+            color: var(--accent-yellow);
+            font-size: 0.9rem;
+        }
+
+        .saved-coords {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .saved-meta {
+            font-size: 0.75rem;
+            color: var(--success-green);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .delete-btn {
+            background: transparent;
+            color: var(--danger-red);
+            border: none;
+            padding: 2px 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            box-shadow: none;
+        }
+
         .logs {
             font-family: monospace;
             font-size: 0.75rem;
@@ -179,7 +261,7 @@
             background: #07101c;
             padding: 10px;
             border-radius: 6px;
-            height: 80px;
+            height: 70px;
             overflow-y: auto;
             border: 1px solid rgba(255,255,255,0.05);
         }
@@ -197,14 +279,14 @@
 <div class="container">
     <header>
         <h1>OrbitalGPS Telemetry</h1>
-        <p>Interface de Positionnement Terrestre & Quasi-Satellite</p>
+        <p>Positionnement Terrestre & Carnet Géodésique Satellite</p>
     </header>
 
     <!-- Section GPS Temps Réel -->
     <div class="card">
         <div class="card-title">
             <span>Fixation GPS Terrestre</span>
-            <span id="gps-status" class="status-badge">Recherche...</span>
+            <span id="gps-status" class="status-badge">En attente</span>
         </div>
         <div class="grid-stats">
             <div class="stat-box">
@@ -234,6 +316,26 @@
         </div>
     </div>
 
+    <!-- Contrôles GPS -->
+    <div class="controls">
+        <button id="btn-lock" onclick="toggleTracking()">Activer GPS Continu</button>
+        <button class="secondary" onclick="exportLogs()">Rapport Log</button>
+    </div>
+
+    <!-- Module Bloc-Notes Géodésique & Balises -->
+    <div class="card">
+        <div class="card-title">
+            <span>Carnet de Positions (Waypoints)</span>
+        </div>
+        <div class="form-group">
+            <input type="text" id="waypoint-name" placeholder="Nom de la position (ex: Station Base, Point A)...">
+            <button onclick="saveCurrentPosition()">Mémoriser la position actuelle</button>
+        </div>
+        <div id="saved-list" class="saved-list">
+            <!-- Les positions enregistrées s'afficheront ici -->
+        </div>
+    </div>
+
     <!-- Section Radar & Simulation Quasi-Satellite -->
     <div class="card">
         <div class="card-title">
@@ -241,32 +343,27 @@
             <span style="font-size: 0.75rem; color: var(--text-muted);">Alt: ~550 km</span>
         </div>
         <div class="radar-container">
-            <canvas id="radarCanvas" width="280" height="240"></canvas>
+            <canvas id="radarCanvas" width="260" height="220"></canvas>
         </div>
         <div style="margin-top: 10px; display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
-            <span>Satellites visibles : <strong id="sat-count" style="color:var(--accent-yellow)">4</strong></span>
-            <span>Vitesse orbitale : <strong style="color:var(--text-main)">7.82 km/s</strong></span>
+            <span>Constellation : <strong style="color:var(--accent-yellow)">GPS / Galileo / Glonass</strong></span>
+            <span>Vitesse : <strong style="color:var(--text-main)">7.82 km/s</strong></span>
         </div>
-    </div>
-
-    <!-- Contrôles -->
-    <div class="controls">
-        <button id="btn-lock" onclick="toggleTracking()">Activer GPS Continu</button>
-        <button class="secondary" onclick="exportData()">Rapport Log</button>
     </div>
 
     <!-- Journaux de bord -->
     <div class="card" style="padding: 10px;">
         <div class="card-title" style="margin-bottom: 6px; font-size: 0.8rem;">Flux de Télémétrie</div>
-        <div id="log-box" class="logs">[SYSTEM] Initialisation du module OrbitalGPS...<br>[SYSTEM] Prêt pour acquisition des coordonnées.</div>
+        <div id="log-box" class="logs">[SYSTEM] Module initialisé. Prêt pour acquisition GPS.</div>
     </div>
 
-    <footer>OrbitalGPS PWA • Prêt pour conversion APK</footer>
+    <footer>OrbitalGPS PWA • Conçu pour Android APK</footer>
 </div>
 
 <script>
     let watchId = null;
     let isTracking = false;
+    let currentCoords = { lat: null, lon: null, alt: null };
     const logBox = document.getElementById('log-box');
 
     function logMessage(msg) {
@@ -275,7 +372,85 @@
         logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // Canvas Radar Rendering
+    // --- FORMULE DE HAVERSINE (Calcul de distance géodésique en km) ---
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Rayon de la Terre en km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    // --- GESTION DU BLOC-NOTES DES POSITIONS ---
+    let waypoints = JSON.parse(localStorage.getItem('orbital_waypoints') || '[]');
+
+    function renderWaypoints() {
+        const listContainer = document.getElementById('saved-list');
+        listContainer.innerHTML = '';
+
+        if (waypoints.length === 0) {
+            listContainer.innerHTML = '<div style="text-align:center; color: var(--text-muted); font-size: 0.8rem; padding: 10px;">Aucune position mémorisée.</div>';
+            return;
+        }
+
+        waypoints.forEach((wp, index) => {
+            let distText = "-- km";
+            if (currentCoords.lat !== null && currentCoords.lon !== null) {
+                const dist = calculateDistance(currentCoords.lat, currentCoords.lon, wp.lat, wp.lon);
+                distText = dist < 1 ? (dist * 1000).toFixed(0) + " m" : dist.toFixed(2) + " km";
+            }
+
+            const item = document.createElement('div');
+            item.className = 'saved-item';
+            item.innerHTML = `
+                <div class="saved-item-header">
+                    <span class="saved-title">${wp.name}</span>
+                    <button class="delete-btn" onclick="deleteWaypoint(${index})">Supprimer</button>
+                </div>
+                <div class="saved-coords">Lat: ${wp.lat.toFixed(6)}, Lon: ${wp.lon.toFixed(6)}</div>
+                <div class="saved-meta">
+                    <span>Altitude: ${wp.alt}</span>
+                    <span>Distance : <strong>${distText}</strong></span>
+                </div>
+            `;
+            listContainer.appendChild(item);
+        });
+    }
+
+    function saveCurrentPosition() {
+        if (currentCoords.lat === null || currentCoords.lon === null) {
+            alert("Veuillez d'abord activer le GPS pour acquérir une position valide.");
+            return;
+        }
+        const nameInput = document.getElementById('waypoint-name');
+        const name = nameInput.value.trim() || `Position ${waypoints.length + 1}`;
+
+        waypoints.push({
+            name: name,
+            lat: currentCoords.lat,
+            lon: currentCoords.lon,
+            alt: currentCoords.alt !== null ? currentCoords.alt.toFixed(1) + " m" : "N/A",
+            date: new Date().toLocaleString()
+        });
+
+        localStorage.setItem('orbital_waypoints', JSON.stringify(waypoints));
+        nameInput.value = '';
+        renderWaypoints();
+        logMessage(`Position "${name}" enregistrée dans le carnet.`);
+    }
+
+    function deleteWaypoint(index) {
+        waypoints.splice(index, 1);
+        localStorage.setItem('orbital_waypoints', JSON.stringify(waypoints));
+        renderWaypoints();
+        logMessage("Position supprimée du carnet.");
+    }
+
+    // --- CANVAS RADAR ---
     const canvas = document.getElementById('radarCanvas');
     const ctx = canvas.getContext('2d');
     let angle = 0;
@@ -284,25 +459,22 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const cx = canvas.width / 2;
         const cy = canvas.height / 2;
-        const maxR = 105;
+        const maxR = 95;
 
-        // Cercles concentriques
         ctx.strokeStyle = 'rgba(255, 204, 0, 0.15)';
         ctx.lineWidth = 1;
-        [35, 70, 105].forEach(r => {
+        [30, 60, 95].forEach(r => {
             ctx.beginPath();
             ctx.arc(cx, cy, r, 0, Math.PI * 2);
             ctx.stroke();
         });
 
-        // Croix centrale
         ctx.beginPath();
         ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height);
         ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy);
         ctx.strokeStyle = 'rgba(255, 204, 0, 0.1)';
         ctx.stroke();
 
-        // Balayage radar animé
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(angle);
@@ -317,12 +489,11 @@
         ctx.fill();
         ctx.restore();
 
-        // Satellites simulés en orbite
         const sats = [
-            { distance: 50, theta: angle * 1.5, name: 'GPS-SV 03' },
-            { distance: 85, theta: -angle * 0.8 + 1, name: 'GALILEO 21' },
-            { distance: 30, theta: angle * 2 - 0.5, name: 'GLONASS 7' },
-            { distance: 95, theta: -angle * 1.2 + 2, name: 'QZS-1 (Quasi-Sat)' }
+            { distance: 45, theta: angle * 1.5, name: 'GPS-SV 03' },
+            { distance: 75, theta: -angle * 0.8 + 1, name: 'GALILEO 21' },
+            { distance: 25, theta: angle * 2 - 0.5, name: 'GLONASS 7' },
+            { distance: 85, theta: -angle * 1.2 + 2, name: 'QZS-1 (Sub-Sat)' }
         ];
 
         sats.forEach(s => {
@@ -337,7 +508,6 @@
             ctx.fillText(s.name, sx + 5, sy - 3);
         });
 
-        // Position centrale (Utilisateur / Station au sol)
         ctx.fillStyle = '#00ff88';
         ctx.beginPath();
         ctx.arc(cx, cy, 4, 0, Math.PI * 2);
@@ -348,52 +518,50 @@
     }
     drawRadar();
 
-    // Gestion GPS
+    // --- GESTION DU GPS ---
     function toggleTracking() {
         const btn = document.getElementById('btn-lock');
         const statusBadge = document.getElementById('gps-status');
 
         if (!isTracking) {
             if (!navigator.geolocation) {
-                alert("La géolocalisation n'est pas supportée par votre navigateur.");
+                alert("La géolocalisation n'est pas supportée.");
                 return;
             }
             logMessage("Demande d'accès GPS en cours...");
             statusBadge.innerText = "Acquisition...";
-            statusBadge.style.color = "#ffcc00";
-            statusBadge.style.borderColor = "rgba(255, 204, 0, 0.3)";
-            statusBadge.style.background = "rgba(255, 204, 0, 0.15)";
 
             watchId = navigator.geolocation.watchPosition(
                 position => {
                     isTracking = true;
                     btn.innerText = "Arrêter GPS";
                     btn.style.background = "#ff4444";
-                    statusBadge.innerText = "Connecté (Fix 3D)";
-                    statusBadge.style.color = "#00ff88";
-                    statusBadge.style.borderColor = "rgba(0, 255, 136, 0.3)";
-                    statusBadge.style.background = "rgba(0, 255, 136, 0.15)";
+                    statusBadge.innerText = "Fix 3D Actif";
 
-                    const lat = position.coords.latitude.toFixed(6);
-                    const lon = position.coords.longitude.toFixed(6);
-                    const alt = position.coords.altitude ? position.coords.altitude.toFixed(1) + " m" : "N/A";
-                    const acc = position.coords.accuracy.toFixed(1) + " m";
-                    const speed = position.coords.speed ? (position.coords.speed * 3.6).toFixed(1) + " km/h" : "0 km/h";
-                    const heading = position.coords.heading ? position.coords.heading.toFixed(0) + "°" : "0°";
+                    currentCoords.lat = position.coords.latitude;
+                    currentCoords.lon = position.coords.longitude;
+                    currentCoords.alt = position.coords.altitude;
 
-                    document.getElementById('val-lat').innerText = lat;
-                    document.getElementById('val-lon').innerText = lon;
-                    document.getElementById('val-alt').innerText = alt;
-                    document.getElementById('val-acc').innerText = acc;
-                    document.getElementById('val-speed').innerText = speed;
-                    document.getElementById('val-heading').innerText = heading;
+                    const latStr = currentCoords.lat.toFixed(6);
+                    const lonStr = currentCoords.lon.toFixed(6);
+                    const altStr = currentCoords.alt ? currentCoords.alt.toFixed(1) + " m" : "N/A";
+                    const accStr = position.coords.accuracy.toFixed(1) + " m";
+                    const speedStr = position.coords.speed ? (position.coords.speed * 3.6).toFixed(1) + " km/h" : "0 km/h";
+                    const headingStr = position.coords.heading ? position.coords.heading.toFixed(0) + "°" : "0°";
 
-                    logMessage(`Fix GPS mis à jour : Lat ${lat}, Lon ${lon} (Précision: ${acc})`);
+                    document.getElementById('val-lat').innerText = latStr;
+                    document.getElementById('val-lon').innerText = lonStr;
+                    document.getElementById('val-alt').innerText = altStr;
+                    document.getElementById('val-acc').innerText = accStr;
+                    document.getElementById('val-speed').innerText = speedStr;
+                    document.getElementById('val-heading').innerText = headingStr;
+
+                    // Mettre à jour l'affichage des distances dans le carnet
+                    renderWaypoints();
                 },
                 error => {
                     logMessage(`Erreur GPS [${error.code}] : ${error.message}`);
                     statusBadge.innerText = "Erreur Signal";
-                    statusBadge.style.color = "#ff4444";
                 },
                 { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
             );
@@ -403,23 +571,23 @@
             btn.innerText = "Activer GPS Continu";
             btn.style.background = "var(--accent-yellow)";
             statusBadge.innerText = "En attente";
-            statusBadge.style.color = "var(--text-muted)";
-            statusBadge.style.borderColor = "var(--border-color)";
-            statusBadge.style.background = "transparent";
             logMessage("Suivi GPS arrêté.");
         }
     }
 
-    function exportData() {
-        const text = logBox.innerText;
+    function exportLogs() {
+        const text = logBox.innerText + "\n\n--- WAYPOINTS ---\n" + JSON.stringify(waypoints, null, 2);
         const blob = new Blob([text], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `OrbitalGPS_Log_${Date.now()}.txt`;
+        a.download = `OrbitalGPS_Export_${Date.now()}.txt`;
         a.click();
-        logMessage("Rapport de télémétrie exporté.");
+        logMessage("Rapport et waypoints exportés.");
     }
+
+    // Initialisation liste au chargement
+    renderWaypoints();
 </script>
 
 </body>
