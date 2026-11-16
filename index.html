@@ -147,11 +147,12 @@
             gap: 10px;
         }
 
-        /* BOUTON CUSTOM GARANTISSANT DU NOIR SUR JAUNE STRICT */
+        /* CORRECTION 1 : NOIR SUR JAUNE STRICT, PARTOUT, SANS EXCEPTION */
         .custom-btn {
             flex: 1;
             background-color: #ffcc00 !important;
             color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
             border: none;
             border-radius: 8px;
             padding: 14px;
@@ -162,22 +163,53 @@
             box-shadow: 0 4px 10px rgba(255, 204, 0, 0.3);
             user-select: none;
             -webkit-user-select: none;
+            text-shadow: none !important;
         }
 
-        .custom-btn:active {
-            opacity: 0.8;
+        .custom-btn *,
+        .custom-btn span,
+        .custom-btn div {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            text-shadow: none !important;
+        }
+
+        .custom-btn:active,
+        .custom-btn:hover,
+        .custom-btn:focus {
+            background-color: #ffcc00 !important;
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            opacity: 0.9;
+        }
+
+        /* Bouton actif du suivi : reste JAUNE avec écriture NOIRE, ne passe plus en rouge blanc */
+        .custom-btn.is-tracking {
+            background-color: #ffcc00 !important;
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            outline: 2px solid #000000;
+            outline-offset: -2px;
         }
 
         .custom-btn.secondary {
             background-color: transparent !important;
             color: #ffcc00 !important;
+            -webkit-text-fill-color: #ffcc00 !important;
             border: 1px solid #ffcc00;
             box-shadow: none;
+        }
+
+        .custom-btn.secondary *,
+        .custom-btn.secondary span {
+            color: #ffcc00 !important;
+            -webkit-text-fill-color: #ffcc00 !important;
         }
 
         .custom-btn.danger {
             background-color: var(--danger-red) !important;
             color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
             box-shadow: 0 4px 10px rgba(255, 68, 68, 0.3);
         }
 
@@ -313,6 +345,17 @@
             color: var(--text-muted);
             margin-top: 10px;
         }
+
+        .qibla-guide {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-align: center;
+            margin-top: 8px;
+            color: #ffffff;
+        }
+        .qibla-guide.ok {
+            color: #00ff88;
+        }
     </style>
 </head>
 <body>
@@ -323,7 +366,6 @@
         <p>Positionnement, Carnet, Surfaces, Radar & Qibla</p>
     </header>
 
-    <!-- Section GPS Temps Réel -->
     <div class="card">
         <div class="card-title">
             <span>Fixation GPS Terrestre</span>
@@ -357,12 +399,10 @@
         </div>
     </div>
 
-    <!-- Contrôles GPS -->
     <div class="controls">
         <div id="btn-lock" class="custom-btn" onclick="toggleTracking()">Activer GPS & Capteurs</div>
     </div>
 
-    <!-- Boussole Qibla Active -->
     <div class="card">
         <div class="card-title">
             <span>Boussole Qibla Active (Kaaba)</span>
@@ -371,10 +411,10 @@
         <div class="visual-container">
             <canvas id="compassCanvas" width="260" height="220"></canvas>
         </div>
-        <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 8px;">Aiguille positionnée entre le Nord et l'Est (Secteur Nord-Est).</p>
+        <div id="qibla-guide" class="qibla-guide">Active le GPS, puis tourne-toi jusqu'à ce que l'aiguille verte pointe en haut.</div>
+        <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 8px;">Le cadran tourne avec ton téléphone. L'aiguille verte pointe toujours vers la Kaaba à la Mecque.</p>
     </div>
 
-    <!-- Carnet & Façade de Saisie -->
     <div class="card">
         <div class="card-title">
             <span>Carnet & Coins de Terrain</span>
@@ -385,9 +425,7 @@
             <div class="custom-btn" onclick="saveCurrentPosition()">Mémoriser ce point</div>
         </div>
         <div style="font-size: 0.8rem; color: var(--accent-yellow); margin-bottom: 8px; font-weight: 600;">Waypoints Enregistrés :</div>
-        <div id="saved-list" class="saved-list">
-            <!-- Rempli dynamiquement -->
-        </div>
+        <div id="saved-list" class="saved-list"></div>
 
         <label for="report-text">Récapitulatif textuel (copiable pour rapports) :</label>
         <textarea id="report-text" class="report-box" readonly>Aucun point enregistré.</textarea>
@@ -399,7 +437,6 @@
         </div>
     </div>
 
-    <!-- Module Calcul de Surface -->
     <div class="card">
         <div class="card-title">
             <span>Calculateur de Surface (Terrain)</span>
@@ -411,7 +448,6 @@
         </div>
     </div>
 
-    <!-- Radar Orbital LEO -->
     <div class="card">
         <div class="card-title">
             <span>Radar Orbital LEO (Satellites)</span>
@@ -422,10 +458,9 @@
         </div>
     </div>
 
-    <!-- Journaux -->
     <div class="card" style="padding: 10px;">
         <div class="card-title" style="margin-bottom: 6px; font-size: 0.8rem;">Flux de Télémétrie</div>
-        <div id="log-box" class="logs">[SYSTEM] Prêt. Noir sur Jaune strict & Qibla fixée au Nord-Est.</div>
+        <div id="log-box" class="logs">[SYSTEM] Prêt. Noir sur Jaune strict & Qibla calculée vers Kaaba.</div>
     </div>
 
     <footer>OrbitalGPS PWA • Android APK Ready</footer>
@@ -434,9 +469,9 @@
 <script>
     let watchId = null;
     let isTracking = false;
-    let currentCoords = { lat: 31.6295, lon: -7.9811 }; 
+    let currentCoords = { lat: 31.6295, lon: -7.9811 };
     let qiblaAngle = 0;
-    let phoneHeading = 0; 
+    let phoneHeading = 0;
     const logBox = document.getElementById('log-box');
 
     function logMessage(msg) {
@@ -450,30 +485,60 @@
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                   Math.sin(dLon/2) * Math.sin(dLon/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         return R * c;
     }
 
+    // CORRECTION 2 : VRAI CALCUL QIBLA VERS LA KAABA, PAS UN ANGLE FIXE
     function calculateQibla(lat, lon) {
-        // CORRECTION DE L'ORIENTATION : Forcer la Qibla dans le secteur Nord-Est (entre 0° et 90°)
-        // Par exemple, réglée précisément pour pointer dans le quadrant Nord-Est (ex: ~70° à 75°)
-        const baseNorthEastAzimuth = 72.5; 
-        return baseNorthEastAzimuth;
+        const kaabaLat = 21.422487 * Math.PI / 180;
+        const kaabaLon = 39.826206 * Math.PI / 180;
+        const latRad = lat * Math.PI / 180;
+        const lonRad = lon * Math.PI / 180;
+        const dLon = kaabaLon - lonRad;
+        const y = Math.sin(dLon) * Math.cos(kaabaLat);
+        const x = Math.cos(latRad) * Math.sin(kaabaLat) - Math.sin(latRad) * Math.cos(kaabaLat) * Math.cos(dLon);
+        let brg = Math.atan2(y, x) * 180 / Math.PI;
+        return (brg + 360) % 360;
     }
 
+    // Initialise dès l'ouverture avec Marrakech, pour que l'aiguille soit juste même avant le GPS
+    qiblaAngle = calculateQibla(currentCoords.lat, currentCoords.lon);
+    document.getElementById('val-qibla').innerText = qiblaAngle.toFixed(1) + "°";
+
     function initCompassSensors() {
+        // iPhone : demande d'autorisation
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission().then(function(state) {
+                if (state === 'granted') {
+                    startOrientationListener();
+                } else {
+                    document.getElementById('compass-status').innerText = "Autorisation boussole refusée";
+                }
+            }).catch(function() {
+                startOrientationListener();
+            });
+        } else {
+            startOrientationListener();
+        }
+    }
+
+    function startOrientationListener() {
         if (window.DeviceOrientationEvent) {
             window.addEventListener('deviceorientation', (event) => {
                 let heading = null;
-                if (event.webkitCompassHeading !== undefined) {
-                    heading = event.webkitCompassHeading; 
-                } else if (event.alpha !== null) {
-                    heading = 360 - event.alpha; 
+                if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
+                    heading = event.webkitCompassHeading;
+                } else if (event.alpha !== null && event.alpha !== undefined) {
+                    heading = 360 - event.alpha;
+                    if (event.absolute === false && event.webkitCompassHeading === undefined) {
+                        // Sur Android, alpha est déjà relatif, on le garde tel quel
+                    }
                 }
-                if (heading !== null) {
-                    phoneHeading = heading;
+                if (heading !== null && !isNaN(heading)) {
+                    phoneHeading = ((heading % 360) + 360) % 360;
                     document.getElementById('val-heading').innerText = phoneHeading.toFixed(0) + "°";
                     document.getElementById('compass-status').innerText = "Capteur Actif";
                 }
@@ -483,7 +548,7 @@
         }
     }
 
-    // Boussole Qibla Canvas
+    // Boussole Qibla Canvas - cadran qui tourne, aiguille toujours vers Kaaba
     const compassCanvas = document.getElementById('compassCanvas');
     const cCtx = compassCanvas.getContext('2d');
 
@@ -493,19 +558,47 @@
         const cy = compassCanvas.height / 2;
         const radius = 80;
 
+        // Cercle extérieur
         cCtx.strokeStyle = 'rgba(255, 204, 0, 0.3)';
         cCtx.lineWidth = 2;
         cCtx.beginPath();
         cCtx.arc(cx, cy, radius, 0, Math.PI * 2);
         cCtx.stroke();
 
-        cCtx.fillStyle = '#8aa4c4';
-        cCtx.font = '10px monospace';
-        cCtx.fillText('N', cx - 4, cy - radius - 6);
-        cCtx.fillText('S', cx - 4, cy + radius + 14);
-        cCtx.fillText('E', cx + radius + 6, cy + 4);
-        cCtx.fillText('W', cx - radius - 16, cy + 4);
+        // CADRAN QUI TOURNE AVEC LE TÉLÉPHONE : Nord = -heading sur l'écran
+        cCtx.save();
+        cCtx.translate(cx, cy);
+        cCtx.rotate(-phoneHeading * Math.PI / 180);
 
+        // Graduations toutes les 30°
+        for (let a = 0; a < 360; a += 30) {
+            const rad = a * Math.PI / 180;
+            const x1 = Math.sin(rad) * (radius - 6);
+            const y1 = -Math.cos(rad) * (radius - 6);
+            const x2 = Math.sin(rad) * radius;
+            const y2 = -Math.cos(rad) * radius;
+            cCtx.strokeStyle = 'rgba(255,255,255,0.25)';
+            cCtx.lineWidth = 1;
+            cCtx.beginPath();
+            cCtx.moveTo(x1, y1);
+            cCtx.lineTo(x2, y2);
+            cCtx.stroke();
+        }
+
+        // Lettres cardinales dans le repère qui tourne
+        cCtx.fillStyle = '#ffffff';
+        cCtx.font = 'bold 13px monospace';
+        cCtx.textAlign = 'center';
+        cCtx.textBaseline = 'middle';
+        cCtx.fillStyle = '#ffcc00';
+        cCtx.fillText('N', 0, -radius - 12);
+        cCtx.fillStyle = '#8aa4c4';
+        cCtx.fillText('E', radius + 12, 0);
+        cCtx.fillText('S', 0, radius + 12);
+        cCtx.fillText('W', -radius - 12, 0);
+        cCtx.restore();
+
+        // AIGUILLE QIBLA : angle à l'écran = Qibla - heading, toujours vers la Kaaba
         const relativeAngle = (qiblaAngle - phoneHeading) * Math.PI / 180;
 
         cCtx.save();
@@ -522,16 +615,42 @@
         cCtx.fillStyle = '#00ff88';
         cCtx.beginPath();
         cCtx.moveTo(0, -radius + 5);
-        cCtx.lineTo(-5, -radius + 18);
-        cCtx.lineTo(5, -radius + 18);
+        cCtx.lineTo(-6, -radius + 20);
+        cCtx.lineTo(6, -radius + 20);
+        cCtx.closePath();
         cCtx.fill();
-
         cCtx.restore();
 
+        // Petit triangle jaune en haut = direction du téléphone
+        cCtx.fillStyle = '#ffcc00';
+        cCtx.beginPath();
+        cCtx.moveTo(cx, 6);
+        cCtx.lineTo(cx - 6, 16);
+        cCtx.lineTo(cx + 6, 16);
+        cCtx.closePath();
+        cCtx.fill();
+
+        // Point central
         cCtx.fillStyle = '#ffcc00';
         cCtx.beginPath();
         cCtx.arc(cx, cy, 4, 0, Math.PI * 2);
         cCtx.fill();
+
+        // Guide texte : tourne à droite / gauche / face à la Qibla
+        const diff = ((qiblaAngle - phoneHeading + 540) % 360) - 180;
+        const guide = document.getElementById('qibla-guide');
+        if (guide) {
+            if (Math.abs(diff) <= 5) {
+                guide.textContent = "Tu es face à la Qibla, alhamdoulillah.";
+                guide.className = "qibla-guide ok";
+            } else if (diff > 0) {
+                guide.textContent = "Tourne à droite de " + Math.abs(diff).toFixed(0) + "° vers la Qibla.";
+                guide.className = "qibla-guide";
+            } else {
+                guide.textContent = "Tourne à gauche de " + Math.abs(diff).toFixed(0) + "° vers la Qibla.";
+                guide.className = "qibla-guide";
+            }
+        }
 
         requestAnimationFrame(drawCompass);
     }
@@ -683,7 +802,7 @@
             alert("Aucun enregistrement à exporter.");
             return;
         }
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(waypoints, null, 2));
+        const dataStr = "data:text/json;charset=utf-8,[STRIPPED] + encodeURIComponent(JSON.stringify(waypoints, null, 2));
         const downloadAnchor = document.createElement('a');
         downloadAnchor.setAttribute("href", dataStr);
         downloadAnchor.setAttribute("download", `OrbitalGPS_Backup_${Date.now()}.json`);
@@ -762,8 +881,10 @@
                 position => {
                     isTracking = true;
                     btn.innerText = "Arrêter Suivi";
-                    btn.style.backgroundColor = "#ff4444";
-                    btn.style.color = "#ffffff";
+                    // Reste JAUNE avec écriture NOIRE, jamais blanc sur jaune
+                    btn.classList.add("is-tracking");
+                    btn.style.backgroundColor = "#ffcc00";
+                    btn.style.color = "#000000";
                     statusBadge.innerText = "Fix 3D Actif";
 
                     currentCoords.lat = position.coords.latitude;
@@ -790,6 +911,7 @@
             navigator.geolocation.clearWatch(watchId);
             isTracking = false;
             btn.innerText = "Activer GPS & Capteurs";
+            btn.classList.remove("is-tracking");
             btn.style.backgroundColor = "#ffcc00";
             btn.style.color = "#000000";
             statusBadge.innerText = "En attente";
