@@ -394,6 +394,140 @@
             border-color: #ffcc00 !important;
             box-shadow: none !important;
         }
+
+        /* ---- Calculateur de surface (polygon selector) ---- */
+        .poly-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: rgba(11, 25, 44, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            margin-bottom: 6px;
+        }
+
+        .poly-row input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffcc00;
+            border-radius: 4px;
+            background: transparent;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
+            forced-color-adjust: none;
+        }
+
+        .poly-row input[type="checkbox"]:checked {
+            background: #ffcc00;
+        }
+
+        .poly-row input[type="checkbox"]:checked::after {
+            content: "✓";
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: 900;
+            font-size: 14px;
+            forced-color-adjust: none;
+        }
+
+        .poly-order {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #ffcc00;
+            color: #000;
+            font-weight: 700;
+            font-size: 0.7rem;
+            flex-shrink: 0;
+            forced-color-adjust: none;
+        }
+
+        .poly-order:empty {
+            visibility: hidden;
+        }
+
+        .poly-name {
+            font-weight: 600;
+            color: var(--accent-yellow);
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .poly-coords {
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .poly-tools {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .poly-tools button {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.78rem;
+        }
+
+        .poly-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .poly-option input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ffcc00;
+            border-radius: 4px;
+            background: transparent;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
+            forced-color-adjust: none;
+        }
+
+        .poly-option input[type="checkbox"]:checked {
+            background: #ffcc00;
+        }
+
+        .poly-option input[type="checkbox"]:checked::after {
+            content: "✓";
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: 900;
+            font-size: 12px;
+            forced-color-adjust: none;
+        }
     </style>
 </head>
 
@@ -497,6 +631,55 @@
         <div id="saved-list" class="saved-list"></div>
     </div>
 
+    <!-- Calculateur de surface polygonale -->
+    <div class="card">
+        <div class="card-title">
+            <span>Calculateur de Surface</span>
+            <span id="poly-count" class="status-badge">0 point</span>
+        </div>
+
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">
+            Cochez les points limites du polygone. L'aire et le périmètre sont calculés automatiquement à partir des coordonnées GPS réelles.
+        </p>
+
+        <label class="poly-option">
+            <input type="checkbox" id="poly-auto-sort" checked onchange="updatePolygon()">
+            <span>Trier automatiquement les points (par angle autour du centre)</span>
+        </label>
+
+        <div class="poly-tools">
+            <button onclick="selectAllForPolygon()">Tout sélectionner</button>
+            <button onclick="resetPolygon()">Effacer la sélection</button>
+        </div>
+
+        <div id="polygon-selector" class="saved-list" style="max-height: 220px;"></div>
+
+        <div id="poly-order-warning" style="display: none; font-size: 0.72rem; color: var(--accent-yellow); margin-top: 10px; text-align: center; line-height: 1.4;">
+            ⚠️ Ordre manuel activé : cochez les points dans le sens du périmètre.
+        </div>
+
+        <div id="polygon-result" style="margin-top: 14px;">
+            <div id="polygon-empty" style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 10px;">
+                Sélectionnez au moins 3 points pour calculer la surface.
+            </div>
+            <div id="polygon-data" style="display: none;">
+                <div class="grid-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Aire</div>
+                        <div id="poly-area" class="stat-value highlight">--</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Périmètre</div>
+                        <div id="poly-perimeter" class="stat-value">--</div>
+                    </div>
+                </div>
+                <div class="radar-container" style="height: 150px; margin-top: 10px; padding: 5px;">
+                    <svg id="polygon-svg" width="100%" height="150" viewBox="0 0 300 150" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Sauvegarde & Restauration JSON -->
     <div class="card">
         <div class="card-title">
@@ -541,6 +724,8 @@
     var compassListening = false;
     var logBox = document.getElementById("log-box");
 
+    var polygonSelection = []; // liste d'uid dans l'ordre de sélection
+
     function logMessage(message) {
         var time = new Date().toLocaleTimeString();
         logBox.innerHTML += "<br>[" + time + "] " + message;
@@ -558,6 +743,21 @@
     }
 
     var waypoints = getSavedWaypoints();
+
+    function ensureUids() {
+        var changed = false;
+        waypoints.forEach(function(wp) {
+            if (!wp.uid) {
+                wp.uid = "wp_" + Date.now().toString(36) + "_" + Math.random().toString(36).substr(2, 6);
+                changed = true;
+            }
+        });
+        if (changed) storeWaypoints();
+    }
+
+    function generateUid() {
+        return "wp_" + Date.now().toString(36) + "_" + Math.random().toString(36).substr(2, 6);
+    }
 
     function storeWaypoints() {
         try {
@@ -703,6 +903,10 @@
         document.getElementById("qibla-status").innerText = "Boussole activée";
     }
 
+    /* ================================
+       RENDU DU CARNET
+       ================================ */
+
     function renderWaypoints() {
         var listContainer = document.getElementById("saved-list");
         listContainer.innerHTML = "";
@@ -769,6 +973,7 @@
         }
 
         waypoints.push({
+            uid: generateUid(),
             name: customName,
             lat: currentCoords.lat,
             lon: currentCoords.lon,
@@ -780,24 +985,300 @@
 
         storeWaypoints();
         nameInput.value = "";
-        renderWaypoints();
+        refreshUI();
         logMessage('Position "' + customName + '" mémorisée avec succès.');
     }
 
     function deleteWaypoint(index) {
+        var deletedWp = waypoints[index];
         waypoints.splice(index, 1);
+
+        if (deletedWp && deletedWp.uid) {
+            var pos = polygonSelection.indexOf(deletedWp.uid);
+            if (pos >= 0) {
+                polygonSelection.splice(pos, 1);
+            }
+        }
+
         storeWaypoints();
-        renderWaypoints();
+        refreshUI();
         logMessage("Position supprimée du carnet.");
+    }
+
+    /* ================================
+       CALCULATEUR DE SURFACE POLYGONALE
+       ================================ */
+
+    function getSelectedWaypoints() {
+        var result = [];
+        polygonSelection.forEach(function(uid) {
+            for (var i = 0; i < waypoints.length; i++) {
+                if (waypoints[i].uid === uid) {
+                    result.push(waypoints[i]);
+                    return;
+                }
+            }
+        });
+        return result;
+    }
+
+    function sortByAngle(points) {
+        if (points.length < 3) return points.slice();
+
+        var latSum = 0, lonSum = 0;
+        points.forEach(function(p) {
+            latSum += Number(p.lat);
+            lonSum += Number(p.lon);
+        });
+        var lat0 = latSum / points.length;
+        var lon0 = lonSum / points.length;
+        var cosLat0 = Math.cos(lat0 * Math.PI / 180);
+
+        var withAngles = points.map(function(p) {
+            var x = (Number(p.lon) - lon0) * cosLat0;
+            var y = Number(p.lat) - lat0;
+            return { point: p, angle: Math.atan2(y, x) };
+        });
+
+        withAngles.sort(function(a, b) { return a.angle - b.angle; });
+        return withAngles.map(function(wa) { return wa.point; });
+    }
+
+    function computePolygonArea(points) {
+        if (points.length < 3) return 0;
+        var R = 6371000; // m
+
+        var latSum = 0, lonSum = 0;
+        for (var i = 0; i < points.length; i++) {
+            latSum += Number(points[i].lat);
+            lonSum += Number(points[i].lon);
+        }
+        var lat0 = latSum / points.length;
+        var lon0 = lonSum / points.length;
+        var cosLat0 = Math.cos(lat0 * Math.PI / 180);
+
+        var sum = 0;
+        for (var i = 0; i < points.length; i++) {
+            var p1 = points[i];
+            var p2 = points[(i + 1) % points.length];
+            var x1 = (Number(p1.lon) - lon0) * Math.PI / 180 * R * cosLat0;
+            var y1 = (Number(p1.lat) - lat0) * Math.PI / 180 * R;
+            var x2 = (Number(p2.lon) - lon0) * Math.PI / 180 * R * cosLat0;
+            var y2 = (Number(p2.lat) - lat0) * Math.PI / 180 * R;
+            sum += x1 * y2 - x2 * y1;
+        }
+        return Math.abs(sum) / 2; // m²
+    }
+
+    function computePolygonPerimeter(points) {
+        if (points.length < 2) return 0;
+        var total = 0;
+        for (var i = 0; i < points.length; i++) {
+            var p1 = points[i];
+            var p2 = points[(i + 1) % points.length];
+            total += calculateDistance(
+                Number(p1.lat), Number(p1.lon),
+                Number(p2.lat), Number(p2.lon)
+            ) * 1000;
+        }
+        return total; // m
+    }
+
+    function formatArea(m2) {
+        if (!Number.isFinite(m2)) return "--";
+        if (m2 < 10000) return m2.toFixed(1) + " m²";
+        if (m2 < 1000000) return (m2 / 10000).toFixed(3) + " ha";
+        return (m2 / 1000000).toFixed(4) + " km²";
+    }
+
+    function formatLength(meters) {
+        if (!Number.isFinite(meters)) return "--";
+        if (meters < 1000) return meters.toFixed(1) + " m";
+        return (meters / 1000).toFixed(3) + " km";
+    }
+
+    function togglePolygonPoint(uid) {
+        var pos = polygonSelection.indexOf(uid);
+        if (pos >= 0) {
+            polygonSelection.splice(pos, 1);
+        } else {
+            polygonSelection.push(uid);
+        }
+        renderPolygonSelector();
+        updatePolygon();
+    }
+
+    function selectAllForPolygon() {
+        polygonSelection = waypoints.map(function(wp) { return wp.uid; });
+        renderPolygonSelector();
+        updatePolygon();
+    }
+
+    function resetPolygon() {
+        polygonSelection = [];
+        renderPolygonSelector();
+        updatePolygon();
+    }
+
+    function renderPolygonSelector() {
+        var container = document.getElementById("polygon-selector");
+        if (!container) return;
+        container.innerHTML = "";
+
+        if (waypoints.length === 0) {
+            container.innerHTML =
+                '<div style="text-align:center; color:var(--text-muted); font-size:0.8rem; padding:10px;">' +
+                "Aucun point mémorisé. Ajoutez des positions dans le carnet ci-dessus." +
+                "</div>";
+            return;
+        }
+
+        waypoints.forEach(function(wp) {
+            var isSelected = polygonSelection.indexOf(wp.uid) >= 0;
+            var orderNum = isSelected ? (polygonSelection.indexOf(wp.uid) + 1) : "";
+
+            var row = document.createElement("label");
+            row.className = "poly-row";
+            row.innerHTML =
+                '<input type="checkbox" ' + (isSelected ? 'checked' : '') + '>' +
+                '<span class="poly-order">' + orderNum + '</span>' +
+                '<span class="poly-name"></span>' +
+                '<span class="poly-coords"></span>';
+
+            row.querySelector(".poly-name").textContent = wp.name;
+            row.querySelector(".poly-coords").textContent =
+                Number(wp.lat).toFixed(4) + ", " + Number(wp.lon).toFixed(4);
+
+            var cb = row.querySelector("input");
+            cb.addEventListener("change", function() {
+                togglePolygonPoint(wp.uid);
+            });
+
+            container.appendChild(row);
+        });
+    }
+
+    function renderPolygonPreview(points) {
+        var svg = document.getElementById("polygon-svg");
+        if (!svg) return;
+        svg.innerHTML = "";
+
+        if (points.length < 2) return;
+
+        var minLat = Infinity, maxLat = -Infinity;
+        var minLon = Infinity, maxLon = -Infinity;
+        points.forEach(function(p) {
+            var lat = Number(p.lat), lon = Number(p.lon);
+            if (lat < minLat) minLat = lat;
+            if (lat > maxLat) maxLat = lat;
+            if (lon < minLon) minLon = lon;
+            if (lon > maxLon) maxLon = lon;
+        });
+
+        var W = 300, H = 150, pad = 14;
+        var innerW = W - 2 * pad, innerH = H - 2 * pad;
+
+        var rangeLat = maxLat - minLat;
+        var rangeLon = maxLon - minLon;
+        if (rangeLat < 1e-9) rangeLat = 1e-6;
+        if (rangeLon < 1e-9) rangeLon = 1e-6;
+
+        var scale = Math.min(innerW / rangeLon, innerH / rangeLat);
+        var offsetX = pad + (innerW - rangeLon * scale) / 2;
+        var offsetY = pad + (innerH - rangeLat * scale) / 2;
+
+        function toSvg(p) {
+            return {
+                x: offsetX + (Number(p.lon) - minLon) * scale,
+                y: H - offsetY - (Number(p.lat) - minLat) * scale
+            };
+        }
+
+        var pathParts = [];
+        points.forEach(function(p, i) {
+            var sp = toSvg(p);
+            pathParts.push((i === 0 ? "M" : "L") + sp.x.toFixed(2) + " " + sp.y.toFixed(2));
+        });
+        pathParts.push("Z");
+
+        var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", pathParts.join(" "));
+        path.setAttribute("fill", "rgba(255, 204, 0, 0.18)");
+        path.setAttribute("stroke", "#ffcc00");
+        path.setAttribute("stroke-width", "2");
+        path.setAttribute("stroke-linejoin", "round");
+        svg.appendChild(path);
+
+        points.forEach(function(p, i) {
+            var sp = toSvg(p);
+            var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", sp.x.toFixed(2));
+            circle.setAttribute("cy", sp.y.toFixed(2));
+            circle.setAttribute("r", "4");
+            circle.setAttribute("fill", i === 0 ? "#00ff88" : "#ffffff");
+            circle.setAttribute("stroke", "#0b1930");
+            circle.setAttribute("stroke-width", "1.5");
+            svg.appendChild(circle);
+        });
+    }
+
+    function updatePolygon() {
+        var countBadge = document.getElementById("poly-count");
+        if (countBadge) {
+            countBadge.innerText = polygonSelection.length + " point" + (polygonSelection.length > 1 ? "s" : "");
+        }
+
+        var emptyBox = document.getElementById("polygon-empty");
+        var dataBox = document.getElementById("polygon-data");
+        var warning = document.getElementById("poly-order-warning");
+        var autoSort = document.getElementById("poly-auto-sort");
+
+        var autoSortOn = autoSort ? autoSort.checked : true;
+
+        if (warning) {
+            if (!autoSortOn && polygonSelection.length >= 4) {
+                warning.style.display = "block";
+            } else {
+                warning.style.display = "none";
+            }
+        }
+
+        var points = getSelectedWaypoints();
+
+        if (points.length < 3) {
+            if (emptyBox) emptyBox.style.display = "block";
+            if (dataBox) dataBox.style.display = "none";
+            return;
+        }
+
+        var orderedPoints = autoSortOn ? sortByAngle(points) : points;
+
+        var area = computePolygonArea(orderedPoints);
+        var perimeter = computePolygonPerimeter(orderedPoints);
+
+        if (emptyBox) emptyBox.style.display = "none";
+        if (dataBox) dataBox.style.display = "block";
+
+        var areaEl = document.getElementById("poly-area");
+        var perimEl = document.getElementById("poly-perimeter");
+        if (areaEl) areaEl.textContent = formatArea(area);
+        if (perimEl) perimEl.textContent = formatLength(perimeter);
+
+        renderPolygonPreview(orderedPoints);
+    }
+
+    function refreshUI() {
+        ensureUids();
+        renderWaypoints();
+        renderPolygonSelector();
+        updatePolygon();
     }
 
     /* ================================
        EXPORT / IMPORT DE SAUVEGARDE JSON
        ================================ */
 
-    function pad2(n) {
-        return n < 10 ? "0" + n : "" + n;
-    }
+    function pad2(n) { return n < 10 ? "0" + n : "" + n; }
 
     function exportBackupJSON() {
         if (waypoints.length === 0) {
@@ -846,9 +1327,7 @@
 
     document.getElementById("import-file").addEventListener("change", function(event) {
         var file = event.target.files && event.target.files[0];
-        if (!file) {
-            return;
-        }
+        if (!file) return;
 
         var reader = new FileReader();
 
@@ -874,19 +1353,13 @@
             var validWaypoints = [];
             for (var i = 0; i < importedWaypoints.length; i++) {
                 var wp = importedWaypoints[i];
-                if (!wp || typeof wp !== "object") {
-                    continue;
-                }
-                if (typeof wp.name !== "string") {
-                    continue;
-                }
-                if (!Number.isFinite(Number(wp.lat))) {
-                    continue;
-                }
-                if (!Number.isFinite(Number(wp.lon))) {
-                    continue;
-                }
+                if (!wp || typeof wp !== "object") continue;
+                if (typeof wp.name !== "string") continue;
+                if (!Number.isFinite(Number(wp.lat))) continue;
+                if (!Number.isFinite(Number(wp.lon))) continue;
+
                 validWaypoints.push({
+                    uid: (typeof wp.uid === "string" && wp.uid) ? wp.uid : generateUid(),
                     name: String(wp.name),
                     lat: Number(wp.lat),
                     lon: Number(wp.lon),
@@ -903,13 +1376,12 @@
             var msg = "Importer " + validWaypoints.length + " point(s) ?\n\n" +
                 "⚠️ Le carnet actuel (" + waypoints.length + " point(s)) sera remplacé.";
 
-            if (!confirm(msg)) {
-                return;
-            }
+            if (!confirm(msg)) return;
 
             waypoints = validWaypoints;
+            polygonSelection = [];
             storeWaypoints();
-            renderWaypoints();
+            refreshUI();
             logMessage("Sauvegarde importée : " + validWaypoints.length + " point(s) restaurés.");
 
             if (validWaypoints.length < importedWaypoints.length) {
@@ -937,9 +1409,7 @@
     var radarAngle = 0;
 
     function drawRadar() {
-        if (!ctx) {
-            return;
-        }
+        if (!ctx) return;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -1037,16 +1507,11 @@
                     currentCoords.lon = position.coords.longitude;
                     currentCoords.alt = position.coords.altitude;
 
-                    document.getElementById("val-lat").innerText =
-                        currentCoords.lat.toFixed(6);
-                    document.getElementById("val-lon").innerText =
-                        currentCoords.lon.toFixed(6);
+                    document.getElementById("val-lat").innerText = currentCoords.lat.toFixed(6);
+                    document.getElementById("val-lon").innerText = currentCoords.lon.toFixed(6);
                     document.getElementById("val-alt").innerText =
-                        currentCoords.alt !== null
-                            ? currentCoords.alt.toFixed(1) + " m"
-                            : "N/A";
-                    document.getElementById("val-acc").innerText =
-                        position.coords.accuracy.toFixed(1) + " m";
+                        currentCoords.alt !== null ? currentCoords.alt.toFixed(1) + " m" : "N/A";
+                    document.getElementById("val-acc").innerText = position.coords.accuracy.toFixed(1) + " m";
                     document.getElementById("val-speed").innerText =
                         Number.isFinite(position.coords.speed)
                             ? (position.coords.speed * 3.6).toFixed(1) + " km/h"
@@ -1104,7 +1569,12 @@
         logMessage("Rapport et positions exportés.");
     }
 
-    renderWaypoints();
+    /* ================================
+       INITIALISATION
+       ================================ */
+
+    ensureUids();
+    refreshUI();
     updateQibla();
 </script>
 </body>
