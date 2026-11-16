@@ -219,6 +219,9 @@
         .controls {
             display: flex;
             gap: 10px;
+            background: #ffcc00;
+            border-radius: 10px;
+            padding: 4px;
         }
 
         button {
@@ -351,6 +354,17 @@
             color: var(--text-muted);
             margin-top: 10px;
         }
+
+        /* Force le texte noir sur le ruban jaune, même pour le bouton GPS actif */
+        .controls button,
+        .controls button.danger,
+        .controls button.secondary {
+            background: #ffcc00 !important;
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            border: 1px solid #ffcc00 !important;
+            box-shadow: none !important;
+        }
     </style>
 </head>
 
@@ -429,7 +443,7 @@
         </div>
     </div>
 
-    <!-- Commandes GPS -->
+    <!-- Ruban des commandes GPS -->
     <div class="controls">
         <button id="btn-lock" onclick="toggleTracking()">Activer GPS Continu</button>
         <button class="secondary" onclick="exportLogs()">Exporter Log</button>
@@ -486,7 +500,6 @@
     var currentCoords = { lat: null, lon: null, alt: null };
     var compassHeading = null;
     var compassListening = false;
-
     var logBox = document.getElementById("log-box");
 
     function logMessage(message) {
@@ -505,6 +518,8 @@
         }
     }
 
+    var waypoints = getSavedWaypoints();
+
     function storeWaypoints() {
         try {
             window.localStorage.setItem("orbital_waypoints", JSON.stringify(waypoints));
@@ -512,8 +527,6 @@
             logMessage("Impossible d'enregistrer les positions dans ce navigateur.");
         }
     }
-
-    var waypoints = getSavedWaypoints();
 
     // Distance géodésique entre deux positions, en kilomètres
     function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -590,7 +603,6 @@
     function handleDeviceOrientation(event) {
         var heading = null;
 
-        // Cap fourni directement par certains appareils Apple
         if (Number.isFinite(event.webkitCompassHeading)) {
             heading = event.webkitCompassHeading;
         } else if (event.absolute === true && Number.isFinite(event.alpha)) {
