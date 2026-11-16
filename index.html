@@ -6,9 +6,11 @@
     <title>OrbitalGPS - Carnet & Positionnement Satellite</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b192c">
+    <meta name="color-scheme" content="dark">
 
     <style>
         :root {
+            color-scheme: dark;
             --bg-primary: #0b192c;
             --bg-card: #132238;
             --accent-yellow: #ffcc00;
@@ -354,19 +356,38 @@
             margin-top: 10px;
         }
 
+        /* Anti-forçage du mode sombre automatique sur les boutons */
+        button,
+        button *,
+        .delete-btn,
+        .delete-btn * {
+            forced-color-adjust: none;
+        }
+
+        button.danger,
+        button.danger * {
+            -webkit-text-fill-color: #ffffff;
+        }
+
+        .delete-btn,
+        .delete-btn * {
+            -webkit-text-fill-color: var(--danger-red);
+        }
+
         /* Règle prioritaire : boutons jaunes et texte noir */
-        html body .container button:not(.delete-btn) {
+        html body .container button:not(.delete-btn):not(.danger) {
             background-color: #ffcc00 !important;
             color: #000000 !important;
             -webkit-text-fill-color: #000000 !important;
             text-shadow: none !important;
+            forced-color-adjust: none !important;
         }
 
         html body .container .controls {
             background-color: #ffcc00 !important;
         }
 
-        html body .container .controls button {
+        html body .container .controls button:not(.danger) {
             background-color: #ffcc00 !important;
             color: #000000 !important;
             -webkit-text-fill-color: #000000 !important;
@@ -445,26 +466,13 @@
                 Activez le GPS pour calculer la direction, puis la boussole pour orienter la flèche.
             </p>
 
-            <button
-                id="btn-compass"
-                style="background:#ffcc00 !important; color:#000000 !important; -webkit-text-fill-color:#000000 !important;"
-                onclick="enableCompass()"
-            >Activer la boussole</button>
+            <button id="btn-compass" onclick="enableCompass()">Activer la boussole</button>
         </div>
     </div>
 
     <div class="controls">
-        <button
-            id="btn-lock"
-            style="background:#ffcc00 !important; color:#000000 !important; -webkit-text-fill-color:#000000 !important;"
-            onclick="toggleTracking()"
-        >Activer GPS Continu</button>
-
-        <button
-            class="secondary"
-            style="background:#ffcc00 !important; color:#000000 !important; -webkit-text-fill-color:#000000 !important;"
-            onclick="exportLogs()"
-        >Exporter Log</button>
+        <button id="btn-lock" onclick="toggleTracking()">Activer GPS Continu</button>
+        <button class="secondary" onclick="exportLogs()">Exporter Log</button>
     </div>
 
     <div class="card">
@@ -479,10 +487,7 @@
                 id="waypoint-name"
                 placeholder="Ex : FSJES Marrakech, Station Alpha, Point de repère..."
             >
-            <button
-                style="background:#ffcc00 !important; color:#000000 !important; -webkit-text-fill-color:#000000 !important;"
-                onclick="saveCurrentPosition()"
-            >Enregistrer la position actuelle</button>
+            <button onclick="saveCurrentPosition()">Enregistrer la position actuelle</button>
         </div>
 
         <div style="font-size: 0.8rem; color: var(--accent-yellow); margin-bottom: 8px; font-weight: 600;">
