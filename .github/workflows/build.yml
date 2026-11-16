@@ -19,27 +19,17 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Configuration de Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: 8.2
-
       - name: Création du projet Android natif (Wrapper WebView)
         run: |
-          # Création des dossiers
           mkdir -p app/src/main/java/com/orbitalgps
           mkdir -p app/src/main/assets/www
           
-          # Copie de vos fichiers web dans l'APK
           cp index.html app/src/main/assets/www/
           [ -f manifest.json ] && cp manifest.json app/src/main/assets/www/
           [ -f icon-192.png ] && cp icon-192.png app/src/main/assets/www/
           [ -f icon-512.png ] && cp icon-512.png app/src/main/assets/www/
-          
-          # Renommage du service worker pour correspondre au code HTML
-          if [ -f sw.js ]; then cp sw.js app/src/main/assets/www/service-worker.js; fi
 
-          # Fichier settings.gradle
+          # settings.gradle
           cat > settings.gradle <<'EOF'
           pluginManagement {
               repositories {
@@ -59,14 +49,14 @@ jobs:
           include ':app'
           EOF
 
-          # Fichier build.gradle (racine)
+          # build.gradle (racine) avec plugin stable 8.1.1
           cat > build.gradle <<'EOF'
           plugins {
-              id 'com.android.application' version '8.2.0' apply false
+              id 'com.android.application' version '8.1.1' apply false
           }
           EOF
 
-          # Fichier app/build.gradle
+          # app/build.gradle
           cat > app/build.gradle <<'EOF'
           plugins {
               id 'com.android.application'
@@ -172,16 +162,9 @@ jobs:
           }
           EOF
 
-      - name: Compilation de l'APK avec Gradle
+      - name: Compilation de l'APK avec Gradle direct
         run: |
-          # Initialisation du wrapper Gradle
-          gradle wrapper
-          
-          # C'EST ICI QUE CA BLOQUAIT : Donner les droits d'exécution au script
-          chmod +x gradlew
-          
-          # Lancement de la compilation avec affichage des erreurs en cas d'échec
-          ./gradlew assembleDebug --stacktrace
+          gradle assembleDebug --stacktrace
 
       - name: Téléversement de l'APK généré
         uses: actions/upload-artifact@v4
