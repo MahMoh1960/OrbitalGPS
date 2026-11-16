@@ -19,6 +19,9 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Configuration du SDK Android
+        uses: android-actions/setup-android@v3
+
       - name: Création du projet Android natif (Wrapper WebView)
         run: |
           mkdir -p app/src/main/java/com/orbitalgps
@@ -49,7 +52,7 @@ jobs:
           include ':app'
           EOF
 
-          # build.gradle (racine) avec plugin stable 8.1.1
+          # build.gradle (racine)
           cat > build.gradle <<'EOF'
           plugins {
               id 'com.android.application' version '8.1.1' apply false
