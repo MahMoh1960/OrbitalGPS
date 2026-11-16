@@ -27,17 +27,20 @@ jobs:
       - name: Installation de Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      - name: Configuration manuelle de Bubblewrap (Anti-blocage CI/CD)
+      - name: Configuration manuelle de Bubblewrap
         run: |
-          # Création du dossier de config caché de Bubblewrap
           mkdir -p ~/.bubblewrap
-          # On écrit directement les chemins pour éviter l'assistant interactif
+          # Utilisation du chemin exact vers cmdline-tools/latest
           cat > ~/.bubblewrap/config.json <<EOF
           {
             "jdkPath": "$JAVA_HOME",
-            "androidSdkPath": "/usr/local/lib/android/sdk"
+            "androidSdkPath": "/usr/local/lib/android/sdk/cmdline-tools/latest"
           }
           EOF
+          
+          # Diagnostic optionnel : vérifie où se trouve exactement sdkmanager
+          echo "=== Vérification du SDK Android ==="
+          ls -la /usr/local/lib/android/sdk/cmdline-tools/
 
       - name: Génération du keystore de signature
         env:
@@ -91,7 +94,6 @@ jobs:
           BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'password' }}
         run: |
           cd twa
-          # On utilise --skipPwaValidation pour éviter les appels réseau bloquants si besoin
           yes | bubblewrap build --skipPwaValidation
 
       - name: Téléversement de l'APK généré
