@@ -19,20 +19,26 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Configuration du SDK Android
-        uses: android-actions/setup-android@v3
+      - name: Configuration de Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.4'
 
       - name: Création du projet Android natif (Wrapper WebView)
         run: |
           mkdir -p app/src/main/java/com/orbitalgps
           mkdir -p app/src/main/assets/www
-          
-          cp index.html app/src/main/assets/www/
-          [ -f manifest.json ] && cp manifest.json app/src/main/assets/www/
-          [ -f icon-192.png ] && cp icon-192.png app/src/main/assets/www/
-          [ -f icon-512.png ] && cp icon-512.png app/src/main/assets/www/
 
-          # settings.gradle
+          cp index.html app/src/main/assets/www/
+          [ -f manifest.json ] && cp manifest.json app/src/main/assets/www/ || true
+          [ -f icon-192.png ] && cp icon-192.png app/src/main/assets/www/ || true
+          [ -f icon-512.png ] && cp icon-512.png app/src/main/assets/www/ || true
+
+          cat > gradle.properties <<'EOF'
+          android.useAndroidX=true
+          org.gradle.jvmargs=-Xmx2g
+          EOF
+
           cat > settings.gradle <<'EOF'
           pluginManagement {
               repositories {
@@ -52,14 +58,12 @@ jobs:
           include ':app'
           EOF
 
-          # build.gradle (racine)
           cat > build.gradle <<'EOF'
           plugins {
               id 'com.android.application' version '8.1.1' apply false
           }
           EOF
 
-          # app/build.gradle
           cat > app/build.gradle <<'EOF'
           plugins {
               id 'com.android.application'
@@ -85,7 +89,6 @@ jobs:
           }
           EOF
 
-          # AndroidManifest.xml
           cat > app/src/main/AndroidManifest.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -110,64 +113,76 @@ jobs:
           </manifest>
           EOF
 
-          # MainActivity.java
           cat > app/src/main/java/com/orbitalgps/MainActivity.java <<'EOF'
           package com.orbitalgps;
 
-          import android.os.Bundle;
-          import android.webkit.WebView;
-          import android.webkit.GeolocationPermissions;
-          import android.webkit.WebChromeClient;
           import android.Manifest;
           import android.content.pm.PackageManager;
+          import android.os.Bundle;
+          import android.webkit.GeolocationPermissions;
+          import android.webkit.WebChromeClient;
+          import android.webkit.WebResourceRequest;
+          import android.webkit.WebResourceResponse;
+          import android.webkit.WebView;
+          import androidx.annotation.NonNull;
+          import androidx.appcompat.app.AppCompatActivity;
           import androidx.core.app.ActivityCompat;
           import androidx.core.content.ContextCompat;
-          import androidx.appcompat.app.AppCompatActivity;
           import androidx.webkit.WebViewAssetLoader;
           import androidx.webkit.WebViewClientCompat;
 
           public class MainActivity extends AppCompatActivity {
               private WebView webView;
+
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
+
+                  if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                          != PackageManager.PERMISSION_GRANTED) {
+                      ActivityCompat.requestPermissions(this, new String[]{
+                              Manifest.permission.ACCESS_FINE_LOCATION,
+                              Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+                  }
+
                   webView = new WebView(this);
                   setContentView(webView);
-                  
+
                   webView.getSettings().setJavaScriptEnabled(true);
                   webView.getSettings().setDomStorageEnabled(true);
                   webView.getSettings().setGeolocationEnabled(true);
-                  
+
                   final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
-                      .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
-                      .build();
-                      
+                          .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                          .build();
+
                   webView.setWebViewClient(new WebViewClientCompat() {
                       @Override
-                      public android.webkit.WebResourceResponse shouldInterceptRequest(WebView view, android.webkit.WebResourceRequest request) {
+                      public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                           return assetLoader.shouldInterceptRequest(request.getUrl());
                       }
                   });
-                  
+
                   webView.setWebChromeClient(new WebChromeClient() {
                       @Override
                       public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
                           callback.invoke(origin, true, false);
                       }
                   });
-                  
+
                   webView.loadUrl("https://appassets.androidplatform.net/assets/www/index.html");
-                  
-                  if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                      ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-                  }
+              }
+
+              @Override
+              public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+                  super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+                  if (webView != null) webView.reload();
               }
           }
           EOF
 
-      - name: Compilation de l'APK avec Gradle direct
-        run: |
-          gradle assembleDebug --stacktrace
+      - name: Compilation de l'APK
+        run: gradle assembleDebug --stacktrace
 
       - name: Téléversement de l'APK généré
         uses: actions/upload-artifact@v4
